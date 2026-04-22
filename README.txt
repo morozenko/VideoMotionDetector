@@ -1,0 +1,2 @@
+Project uses gstreamer as video processing library.
+On current stage gstreamer is included/linked using direct pointing directives to windows installation folders. TODO: replace with PkgConfig tool for CMake. 
