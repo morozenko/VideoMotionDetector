@@ -5,6 +5,7 @@ class GStreamerWorker
 {
 public:
     static GStreamerWorker& getInstance();
+    void CreateGstPipeline();
 
 private:
     GStreamerWorker();

@@ -4,8 +4,14 @@ project(VideoMotionDetector VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(GSTREAMER_ROOT "C:/Program Files/gstreamer/1.0/mingw_x86_64")
+set(GST_PLUGIN_PATH "C:/Program Files/gstreamer/1.0/mingw_x86_64/lib/gstreamer-1.0")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
+
+# set(PKG_CONFIG_EXECUTABLE "C:/Qt/Tools/mingw1310_64/bin")
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+# pkg_check_modules(GST_VIDEO REQUIRED gstreamer-video-1.0)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
@@ -25,6 +31,7 @@ target_include_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/inc
 target_include_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/include/glib-2.0")
 target_include_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/lib/glib-2.0/include")
 target_link_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/lib")
+target_link_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/lib/streamer-1.0")
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
@@ -40,6 +47,7 @@ set_target_properties(appVideoMotionDetector PROPERTIES
 target_link_libraries(appVideoMotionDetector
     PRIVATE Qt6::Quick
     PRIVATE gstreamer-1.0
+    PRIVATE gstvideo-1.0
 )
 
 install(TARGETS appVideoMotionDetector
