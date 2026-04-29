@@ -5,10 +5,18 @@ import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
 
 Window {
     id: currentWindowId
-    width: 640
-    height: 480
+
+    width: appViewModel.frameWidth
+    height: appViewModel.frameHeight
+    onWidthChanged: appViewModel.frameWidth = currentWindowId.width
+    onHeightChanged: appViewModel.frameHeight = currentWindowId.height
+
     visible: true
-//    flags: Qt.Tool
+    flags: Qt.FramelessWindowHint
+
+    // Edge thickness for mouse detection
+    property int resizeMargin: 8
+
     title: qsTr("VideoMotionDetector")
 
     GstGLQt6VideoItem {
@@ -18,30 +26,80 @@ Window {
             //VideoSink: detectorViewModel.videoSink
             //Component.onCompleted: console.log("videoSink: ", detectorViewModel.videoSink)
         }
-    // CaptureSession {
-    //     id: captureSession
 
-    //     screenCapture: ScreenCapture {
-    //         id: screenCapture
-    //         active: true
-    //         screen: Screen
+    MouseArea {
+        anchors.fill: parent
+        onPressed: (mouse) => {
+            // Allows moving the window by dragging anywhere
+            if (mouse.button === Qt.LeftButton) {
+                currentWindowId.startSystemMove();
+            }
+        }
+    }
 
-    //         Component.onCompleted: { console.log("width: ", width);
-    //             console.log("height: ", height);
-    //             console.log("screen: ", Screen);
-    //             console.log("screen.width: ", Screen.width);
-    //             console.log("screen height: ", Screen.height);
-    //         }
-    //     }
+    MouseArea {
+        id: resizeAreaId
+        anchors.fill: parent
+        hoverEnabled: true
 
-    //     videoOutput: VideoOutput {
-    //         id: videoOutput
-    //         //anchors.fill: parent
-    //         width: currentWindowId.width
-    //         height: currentWindowId.height
+        // Internal function to determine which edge we are near
+        function getEdges(x, y) {
+            let edges = 0;
+            if (x < resizeMargin) edges |= Qt.LeftEdge;
+            if (x > width - resizeMargin) edges |= Qt.RightEdge;
+            if (y < resizeMargin) edges |= Qt.TopEdge;
+            if (y > height - resizeMargin) edges |= Qt.BottomEdge;
+            return edges;
+        }
 
-    //         Component.onCompleted: { console.log("width: ", width);
-    //             console.log("height: ", height)}
-    //     }
-    // }
+        // Update cursor shape based on edge
+        onPositionChanged: (mouse) => {
+            let edges = getEdges(mouse.x, mouse.y);
+            if (edges === (Qt.LeftEdge | Qt.TopEdge) || edges === (Qt.RightEdge | Qt.BottomEdge))
+                cursorShape = Qt.SizeFDiagCursor;
+            else if (edges === (Qt.RightEdge | Qt.TopEdge) || edges === (Qt.LeftEdge | Qt.BottomEdge))
+                cursorShape = Qt.SizeBDiagCursor;
+            else if (edges & (Qt.LeftEdge | Qt.RightEdge))
+                cursorShape = Qt.SizeHorCursor;
+            else if (edges & (Qt.TopEdge | Qt.BottomEdge))
+                cursorShape = Qt.SizeVerCursor;
+            else
+                cursorShape = Qt.ArrowCursor;
+        }
+
+        onPressed: (mouse) => {
+            let edges = getEdges(mouse.x, mouse.y);
+            if (edges !== 0) {
+                currentWindowId.startSystemResize(edges);
+            } else if (mouse.button === Qt.LeftButton) {
+                currentWindowId.startSystemMove(); // Drag to move if not resizing
+            }
+        }
+    }
+
+    // close button
+    Rectangle {
+        id: closeButtonId
+        width: 30
+        height: 30
+        color: closeMouseArea.containsMouse ? "#BFe74c3c" : "#60525252"
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 5
+        radius: 4
+
+        Text {
+            text: "✕"
+            color: "white"
+            anchors.centerIn: parent
+            font.pixelSize: 16
+        }
+
+        MouseArea {
+            id: closeMouseArea
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: currentWindowId.close()
+        }
+    }
 }

@@ -2,7 +2,9 @@
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QQuickItem>
-#include <QLoggingCategory>
+#include <QQmlContext>
+
+#include <memory>
 
 #include "GStreamerWorker/GStreamerWorker.h"
 #include "ViewModels/VideoMotionDetectorViewModel.h"
@@ -17,7 +19,8 @@ int main(int argc, char *argv[])
     gstWorker.CreateGstPipeline();
 
     // create ViewModel
-    VideoMotionDetectorViewModel viewModel(gstWorker);
+    std::shared_ptr<VideoMotionDetectorViewModel> viewModel =
+        std::make_shared<VideoMotionDetectorViewModel>();
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -27,13 +30,15 @@ int main(int argc, char *argv[])
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
 
+    engine.rootContext()->setContextProperty("appViewModel", viewModel.get());
+
     engine.loadFromModule("VideoMotionDetector", "Main");
 
     QQuickItem* videoItem;
     QQuickWindow* rootObject;
 
     /* find and set the videoItem on the sink */
-    rootObject = static_cast<QQuickWindow *> (engine.rootObjects().first());
+    rootObject = static_cast<QQuickWindow*> (engine.rootObjects().first());
     videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
     g_assert (videoItem);
     gstWorker.setVideoSink(videoItem);
@@ -44,7 +49,7 @@ int main(int argc, char *argv[])
         if (sink) {
             // Set window directly into sink
             // It force qml6glsink to take context, created by QT
-            g_object_set(sink, "widget", videoItem, NULL);
+            g_object_set(sink, "widget", videoItem, nullptr);
             GStreamerWorker::getInstance().startPlaying();
         }
     }, Qt::SingleShotConnection);
