@@ -25,6 +25,8 @@ qt_add_qml_module(appVideoMotionDetector
         Main.qml
         SOURCES GStreamerWorker/GStreamerWorker.cpp
         SOURCES GStreamerWorker/GStreamerWorker.h
+        SOURCES ViewModels/VideoMotionDetectorViewModel.h
+        SOURCES ViewModels/VideoMotionDetectorViewModel.cpp
 )
 
 target_include_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/include/gstreamer-1.0")
@@ -48,6 +50,8 @@ target_link_libraries(appVideoMotionDetector
     PRIVATE Qt6::Quick
     PRIVATE gstreamer-1.0
     PRIVATE gstvideo-1.0
+    glib-2.0
+    gobject-2.0
 )
 
 install(TARGETS appVideoMotionDetector

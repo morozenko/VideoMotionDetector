@@ -15,6 +15,8 @@ Window {
             id: videoOutput
             objectName: "videoOutputItem" // Used by C++ to find the item
             anchors.fill: parent
+            //VideoSink: detectorViewModel.videoSink
+            //Component.onCompleted: console.log("videoSink: ", detectorViewModel.videoSink)
         }
     // CaptureSession {
     //     id: captureSession
