@@ -9,18 +9,6 @@
 
 int main(int argc, char *argv[])
 {
-    QLoggingCategory::setFilterRules("qt.qpa.gl=true\nqt.scenegraph.general=true");
-    qputenv("QSG_RHI_BACKEND", "opengl");
-
-    //Desktop OpenGL
-    QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-
-    // OpenGL profile (Core 3.3 or higher)
-    QSurfaceFormat format;
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setVersion(3, 3);
-    QSurfaceFormat::setDefaultFormat(format);
-
     QGuiApplication app(argc, argv);
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
