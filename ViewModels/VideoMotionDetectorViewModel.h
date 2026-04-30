@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+#include "GStreamerWorker/GStreamerWorker.h"
+
 class VideoMotionDetectorViewModel : public QObject
 {
     Q_OBJECT
@@ -13,7 +15,7 @@ class VideoMotionDetectorViewModel : public QObject
     Q_PROPERTY(uint16_t frameHeight READ getHeight WRITE setHeight NOTIFY heightChanged)
 
 public:
-    VideoMotionDetectorViewModel();
+    VideoMotionDetectorViewModel(GStreamerWorker& worker);
     ~VideoMotionDetectorViewModel() = default;
 
     // getters won't be used I believe
@@ -33,11 +35,16 @@ signals:
     void widthChanged();
     void heightChanged();
 
+private slots:
+    void onSizePositionChanged();
+
 private:
     uint16_t m_X0;
     uint16_t m_Y0;
     uint16_t m_frameWidth;
     uint16_t m_frameHeight;
+
+    GStreamerWorker& m_worker;
 };
 
 #endif // VIDEOMOTIONDETECTORVIEWMODEL_H

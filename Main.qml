@@ -6,10 +6,14 @@ import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
 Window {
     id: currentWindowId
 
+    x: appViewModel.X0
+    y: appViewModel.Y0
     width: appViewModel.frameWidth
     height: appViewModel.frameHeight
     onWidthChanged: appViewModel.frameWidth = currentWindowId.width
     onHeightChanged: appViewModel.frameHeight = currentWindowId.height
+    onXChanged: appViewModel.X0 = currentWindowId.x
+    onYChanged: appViewModel.Y0 = currentWindowId.y
 
     visible: true
     flags: Qt.FramelessWindowHint
@@ -23,8 +27,6 @@ Window {
             id: videoOutput
             objectName: "videoOutputItem" // Used by C++ to find the item
             anchors.fill: parent
-            //VideoSink: detectorViewModel.videoSink
-            //Component.onCompleted: console.log("videoSink: ", detectorViewModel.videoSink)
         }
 
     MouseArea {

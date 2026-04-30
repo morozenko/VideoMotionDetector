@@ -1,11 +1,20 @@
 #include "VideoMotionDetectorViewModel.h"
 
-VideoMotionDetectorViewModel::VideoMotionDetectorViewModel()
+VideoMotionDetectorViewModel::VideoMotionDetectorViewModel(GStreamerWorker& worker)
     : m_X0(200),
       m_Y0(200),
-      m_frameWidth(640),
-      m_frameHeight(480)
+      m_frameWidth(740),
+      m_frameHeight(480),
+      m_worker(worker)
 {
+    connect(this, &VideoMotionDetectorViewModel::X0Changed,
+            this, &VideoMotionDetectorViewModel::onSizePositionChanged);
+    connect(this, &VideoMotionDetectorViewModel::Y0Changed,
+            this, &VideoMotionDetectorViewModel::onSizePositionChanged);
+    connect(this, &VideoMotionDetectorViewModel::widthChanged,
+            this, &VideoMotionDetectorViewModel::onSizePositionChanged);
+    connect(this, &VideoMotionDetectorViewModel::heightChanged,
+            this, &VideoMotionDetectorViewModel::onSizePositionChanged);
 }
 
 uint16_t VideoMotionDetectorViewModel::getX0() const
@@ -62,4 +71,9 @@ void VideoMotionDetectorViewModel::setHeight(uint16_t frameHeight)
         m_frameHeight = frameHeight;
         emit heightChanged();
     }
+}
+
+void VideoMotionDetectorViewModel::onSizePositionChanged()
+{
+    m_worker.updateVideoFrameSize(m_X0, m_Y0, m_frameWidth, m_frameHeight);
 }

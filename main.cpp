@@ -5,9 +5,22 @@
 #include <QQmlContext>
 
 #include <memory>
+#include <windows.h>
 
 #include "GStreamerWorker/GStreamerWorker.h"
 #include "ViewModels/VideoMotionDetectorViewModel.h"
+
+void setNonCapturable(QQuickWindow *window)
+{
+    if (!window)
+    {
+        return;
+    }
+
+    HWND hwnd = (HWND)window->winId();
+    // WDA_EXCLUDEFROMCAPTURE = 0x00000011
+    SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+}
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +33,7 @@ int main(int argc, char *argv[])
 
     // create ViewModel
     std::shared_ptr<VideoMotionDetectorViewModel> viewModel =
-        std::make_shared<VideoMotionDetectorViewModel>();
+        std::make_shared<VideoMotionDetectorViewModel>(gstWorker);
 
     QQmlApplicationEngine engine;
     QObject::connect(
@@ -37,15 +50,24 @@ int main(int argc, char *argv[])
     QQuickItem* videoItem;
     QQuickWindow* rootObject;
 
-    /* find and set the videoItem on the sink */
+    // find and set the videoItem on the sink
     rootObject = static_cast<QQuickWindow*> (engine.rootObjects().first());
     videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
     g_assert (videoItem);
     gstWorker.setVideoSink(videoItem);
 
+    // set window not capturable
+    setNonCapturable(rootObject);
+
     // Update gstreamer context, after QML is initialized
     GstElement* sink = gstWorker.getSink();
-    auto connection = QObject::connect(rootObject, &QQuickWindow::beforeRendering, rootObject, [sink, videoItem]() {
+    auto connection = QObject::connect(rootObject, &QQuickWindow::beforeRendering, rootObject, [sink, videoItem, rootObject]() {
+        // update captured frame size
+        GStreamerWorker::getInstance().updateVideoFrameSize(rootObject->x(),
+                                                            rootObject->y(),
+                                                            rootObject->width(),
+                                                            rootObject->height());
+
         if (sink) {
             // Set window directly into sink
             // It force qml6glsink to take context, created by QT
