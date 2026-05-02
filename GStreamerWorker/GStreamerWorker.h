@@ -24,14 +24,23 @@ private:
     GStreamerWorker(const GStreamerWorker&) = delete;
     GStreamerWorker& operator=(const GStreamerWorker& instance) = delete;
 
+    void createPipelineElements();
     void setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
 private:
     GstElement* m_pipeline;
     GstElement* m_source;
     GstElement* m_capsfilter;
+    GstElement* m_capsfilter2;
     GstElement* m_download;
-    GstElement* m_videocrop;
+    GstElement* m_tee;          // video splitter
+    GstElement* m_origQueue;
+    GstElement* m_delayedQueue;
+    GstElement* m_delay;
+    GstElement* m_invert;
+    GstElement* m_alpha;
+    GstElement* m_alpha2;
+    GstElement* m_mixer;
     GstElement* m_convert;
     GstElement* m_upload;
     GstElement* m_sink;

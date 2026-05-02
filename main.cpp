@@ -24,6 +24,8 @@ void setNonCapturable(QQuickWindow *window)
 
 int main(int argc, char *argv[])
 {
+    qputenv("GST_DEBUG", "3");
+
     QGuiApplication app(argc, argv);
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
@@ -54,7 +56,6 @@ int main(int argc, char *argv[])
     rootObject = static_cast<QQuickWindow*> (engine.rootObjects().first());
     videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
     g_assert (videoItem);
-    gstWorker.setVideoSink(videoItem);
 
     // set window not capturable
     setNonCapturable(rootObject);
