@@ -98,12 +98,8 @@ void GStreamerWorker::CreateGstPipeline()
                  "max-size-bytes", (guint)0,
                  nullptr);
 
-    GstElement *m_offset = gst_element_factory_make("identity", "offset_identity");
-    g_object_set(m_offset, "ts-offset", (gint64)50000000, nullptr); // +50мс до мітки часу
-
     g_object_set(m_sink, "sync", FALSE, "qos", FALSE, nullptr); // this switches off redundant synchronization
     g_object_set(m_mixer, "latency", (guint64)60000000, nullptr); // 60ms
-    g_object_set(m_mixer, "start-deadline", (guint64)0, nullptr);
 
     gst_bin_add_many(GST_BIN(m_pipeline),
                      m_source,
@@ -112,7 +108,6 @@ void GStreamerWorker::CreateGstPipeline()
                      m_tee,
                      m_origQueue,
                      m_delay,
-                     m_offset,
                      m_invert,
                      m_mixer,
                      m_convert,
@@ -143,7 +138,7 @@ void GStreamerWorker::CreateGstPipeline()
     }
 
     // link screen delayed flow
-    if (!gst_element_link_many(m_tee, m_delay, m_offset, m_invert, m_mixer, nullptr))
+    if (!gst_element_link_many(m_tee, m_delay, m_invert, m_mixer, nullptr))
     {
         qDebug() << "ERROR: couldn't link delayed flow pipeline elements!";
         return;
@@ -184,13 +179,6 @@ void GStreamerWorker::CreateGstPipeline()
 
 void GStreamerWorker::setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
-    // g_object_set(G_OBJECT(m_videocrop),
-    //              "top", y,
-    //              "left", x,
-    //              "right", 1920 - (x + width),
-    //              "bottom", 1080 - (y + height),
-    //              nullptr);
-
     GstCaps *caps = gst_caps_new_simple("video/x-raw",
                                         "width", G_TYPE_INT, width,
                                         "height", G_TYPE_INT, height,
@@ -229,8 +217,6 @@ void GStreamerWorker::updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t widt
                  "crop-width", width,
                  "crop-height", height,
                  nullptr);
-
-    // setPipelineProperties(x, y, width, height);
 
     GstCaps* newCaps = gst_caps_new_simple("video/x-raw",
                                         "width", G_TYPE_INT, width,

@@ -18,6 +18,12 @@ void setNonCapturable(QQuickWindow *window)
     }
 
     HWND hwnd = (HWND)window->winId();
+
+    // Set WS_EX_APPWINDOW flag, to display window on taskbar
+    LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+    exStyle |= WS_EX_APPWINDOW;
+    SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle);
+
     // WDA_EXCLUDEFROMCAPTURE = 0x00000011
     SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
 }

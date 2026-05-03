@@ -5,6 +5,7 @@ VideoMotionDetectorViewModel::VideoMotionDetectorViewModel(GStreamerWorker& work
       m_Y0(200),
       m_frameWidth(740),
       m_frameHeight(480),
+      m_sliderValue(50), // 50 msec
       m_worker(worker)
 {
     connect(this, &VideoMotionDetectorViewModel::X0Changed,
@@ -35,6 +36,11 @@ uint16_t VideoMotionDetectorViewModel::getWidth() const
 uint16_t VideoMotionDetectorViewModel::getHeight() const
 {
     return m_frameHeight;
+}
+
+uint16_t VideoMotionDetectorViewModel::getSliderValue() const
+{
+    return m_sliderValue;
 }
 
 void VideoMotionDetectorViewModel::setX0(uint16_t X0)
@@ -70,6 +76,15 @@ void VideoMotionDetectorViewModel::setHeight(uint16_t frameHeight)
     {
         m_frameHeight = frameHeight;
         emit heightChanged();
+    }
+}
+
+void VideoMotionDetectorViewModel::setSliderValue(uint16_t sliderValue)
+{
+    if (sliderValue != m_sliderValue)
+    {
+        m_sliderValue = sliderValue;
+        emit sliderValueChanged();
     }
 }
 

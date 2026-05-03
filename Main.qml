@@ -1,5 +1,6 @@
 import QtQuick
 import QtMultimedia
+import QtQuick.Controls
 import QtQuick.Window 2.2
 import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
 
@@ -26,6 +27,7 @@ Window {
 
     title: qsTr("VideoMotionDetector")
 
+    // timer for handling resize/dragging
     Timer {
         id: resizeTimer
         interval: 200 // delay in msec
@@ -46,6 +48,55 @@ Window {
             appViewModel.frameHeight = safeHeight;
             appViewModel.X0 = safeX
             appViewModel.Y0 = safeY
+        }
+    }
+
+    // slider for changing delay
+    Column {
+        id: columnId
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: 20
+        spacing: 20
+        opacity: 0.5
+        z: 1000
+
+        Text {
+            text: "Delay: " + appViewModel.sliderValue
+            font.pixelSize: 20
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        Slider {
+            id: delaySliderId
+            from: 20
+            to: 200
+            stepSize: 10
+            value: appViewModel.sliderValue
+            onMoved: appViewModel.sliderValue = value
+
+            // Slider line
+            background: Rectangle {
+                x: delaySliderId.leftPadding
+                y: delaySliderId.topPadding + delaySliderId.availableHeight / 2 - height / 2
+                implicitWidth: 200
+                implicitHeight: 4
+                width: delaySliderId.availableWidth
+                height: implicitHeight
+                radius: 2
+                color: "#60525252" // Grey
+            }
+
+            // slider handle
+            handle: Rectangle {
+                x: delaySliderId.leftPadding + delaySliderId.visualPosition * (delaySliderId.availableWidth - width)
+                y: delaySliderId.topPadding + delaySliderId.availableHeight / 2 - height / 2
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 10 // Circle
+                color: "white"
+                border.color: "#bdbebf"
+            }
         }
     }
 

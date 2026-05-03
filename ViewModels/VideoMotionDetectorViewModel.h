@@ -13,27 +13,30 @@ class VideoMotionDetectorViewModel : public QObject
     Q_PROPERTY(uint16_t Y0 READ getY0 WRITE setY0 NOTIFY Y0Changed)
     Q_PROPERTY(uint16_t frameWidth READ getWidth WRITE setWidth NOTIFY widthChanged)
     Q_PROPERTY(uint16_t frameHeight READ getHeight WRITE setHeight NOTIFY heightChanged)
+    Q_PROPERTY(uint16_t sliderValue READ getSliderValue WRITE setSliderValue NOTIFY sliderValueChanged)
 
 public:
     VideoMotionDetectorViewModel(GStreamerWorker& worker);
     ~VideoMotionDetectorViewModel() = default;
 
-    // getters won't be used I believe
     uint16_t getX0() const;
     uint16_t getY0() const;
     uint16_t getWidth() const;
     uint16_t getHeight() const;
+    uint16_t getSliderValue() const;
 
     void setX0(uint16_t X0);
     void setY0(uint16_t Y0);
     void setWidth(uint16_t frameWidth);
     void setHeight(uint16_t frameHeight);
+    void setSliderValue(uint16_t sliderValue);
 
 signals:
     void X0Changed();
     void Y0Changed();
     void widthChanged();
     void heightChanged();
+    void sliderValueChanged();
 
 private slots:
     void onSizePositionChanged();
@@ -43,6 +46,7 @@ private:
     uint16_t m_Y0;
     uint16_t m_frameWidth;
     uint16_t m_frameHeight;
+    uint16_t m_sliderValue; // miliseconds
 
     GStreamerWorker& m_worker;
 };
