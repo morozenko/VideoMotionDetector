@@ -31,16 +31,12 @@ private:
     GstElement* m_pipeline;
     GstElement* m_source;
     GstElement* m_capsfilter;
-    GstElement* m_capsfilter2;
     GstElement* m_download;
     GstElement* m_tee;          // video splitter
     GstElement* m_origQueue;
-    GstElement* m_delayedQueue;
     GstElement* m_delay;
     GstElement* m_invert;
-    GstElement* m_alpha;
-    GstElement* m_alpha2;
-    GstElement* m_mixer;
+    GstElement* m_mixer;        // video compositor
     GstElement* m_convert;
     GstElement* m_upload;
     GstElement* m_sink;

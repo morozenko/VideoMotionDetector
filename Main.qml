@@ -10,10 +10,13 @@ Window {
     y: appViewModel.Y0
     width: appViewModel.frameWidth
     height: appViewModel.frameHeight
-    onWidthChanged: appViewModel.frameWidth = currentWindowId.width
-    onHeightChanged: appViewModel.frameHeight = currentWindowId.height
-    onXChanged: appViewModel.X0 = currentWindowId.x
-    onYChanged: appViewModel.Y0 = currentWindowId.y
+    maximumWidth: 1920
+    maximumHeight: 1080
+
+    onWidthChanged: resizeTimer.restart()
+    onHeightChanged: resizeTimer.restart()
+    onXChanged: resizeTimer.restart()
+    onYChanged: resizeTimer.restart()
 
     visible: true
     flags: Qt.FramelessWindowHint
@@ -22,6 +25,29 @@ Window {
     property int resizeMargin: 8
 
     title: qsTr("VideoMotionDetector")
+
+    Timer {
+        id: resizeTimer
+        interval: 200 // delay in msec
+        repeat: false
+        onTriggered: {
+            // don't allow coordinates become negative, when window is dragged
+            let safeX = Math.max(0, currentWindowId.x);
+            let safeY = Math.max(0, currentWindowId.y);
+
+            // rounded values
+            let safeWidth = Math.floor(currentWindowId.width / 16) * 16;
+            let safeHeight = Math.floor(currentWindowId.height / 2) * 2;
+
+            console.log("Updating GStreamer width: ", safeWidth, " height: ", safeHeight);
+
+            // update viewModel
+            appViewModel.frameWidth = safeWidth;
+            appViewModel.frameHeight = safeHeight;
+            appViewModel.X0 = safeX
+            appViewModel.Y0 = safeY
+        }
+    }
 
     GstGLQt6VideoItem {
             id: videoOutput

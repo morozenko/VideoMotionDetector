@@ -24,7 +24,8 @@ void setNonCapturable(QQuickWindow *window)
 
 int main(int argc, char *argv[])
 {
-    qputenv("GST_DEBUG", "3");
+    // uncomment to have detailed gstreamer logs
+    // qputenv("GST_DEBUG", "3");
 
     QGuiApplication app(argc, argv);
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
