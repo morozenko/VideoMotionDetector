@@ -5,7 +5,7 @@ VideoMotionDetectorViewModel::VideoMotionDetectorViewModel(GStreamerWorker& work
       m_Y0(200),
       m_frameWidth(740),
       m_frameHeight(480),
-      m_sliderValue(50), // 50 msec
+      m_sliderValue(worker.getDelayValue()), // 50 msec
       m_worker(worker)
 {
     connect(this, &VideoMotionDetectorViewModel::X0Changed,
@@ -84,6 +84,7 @@ void VideoMotionDetectorViewModel::setSliderValue(uint16_t sliderValue)
     if (sliderValue != m_sliderValue)
     {
         m_sliderValue = sliderValue;
+        m_worker.setDelayValue(sliderValue);
         emit sliderValueChanged();
     }
 }

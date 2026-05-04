@@ -13,6 +13,8 @@ public:
     void CreateGstPipeline();
     GstElement* getSink() const;
     void setVideoSink(QObject* sink);
+    uint16_t getDelayValue();
+    void setDelayValue(uint16_t msecDelay);
 
     void startPlaying() const;
     void updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
@@ -35,11 +37,15 @@ private:
     GstElement* m_tee;          // video splitter
     GstElement* m_origQueue;
     GstElement* m_delay;
-    GstElement* m_invert;
+    GstElement* m_uploadShader;
+    GstElement* m_shader;
+    GstElement* m_downloadShader;
     GstElement* m_mixer;        // video compositor
     GstElement* m_convert;
     GstElement* m_upload;
     GstElement* m_sink;
+
+    uint16_t m_msecDelay;
 };
 
 #endif // GSTREAMERWORKER_H

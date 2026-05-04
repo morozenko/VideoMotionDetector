@@ -2,8 +2,19 @@
 
 #include "GStreamerWorker.h"
 
+const uint32_t ONE_MILLION = 1000000;
+
+const gchar *shader_source =
+    "varying vec2 v_texcoord;"
+    "uniform sampler2D tex;"
+    "void main() {"
+    "  vec4 rgba = texture2D(tex, v_texcoord);"
+    "  gl_FragColor = vec4(1.0 - rgba.rgb, rgba.a);"
+    "}";
+
 GStreamerWorker::GStreamerWorker()
 {
+    m_msecDelay = 50;
     gst_init(nullptr, nullptr);
 }
 
@@ -59,6 +70,43 @@ void GStreamerWorker::setVideoSink(QObject* sink)
     }
 }
 
+uint16_t GStreamerWorker::getDelayValue()
+{
+    return m_msecDelay;
+}
+
+void GStreamerWorker::setDelayValue(uint16_t msecDelay)
+{
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PAUSED))
+    {
+        qDebug() << "ERROR: Could not pause pipeline!";
+    }
+
+    GstPad *sink1 = gst_element_get_static_pad(m_mixer, "sink_1");
+
+    if (sink1)
+    {
+        qDebug() << "Setting mixer delay";
+        gst_pad_set_offset(sink1, (gint64)msecDelay*ONE_MILLION);
+        gst_object_unref(sink1);
+
+        m_msecDelay = msecDelay;
+    }
+    else
+    {
+        qDebug() << "Pad not found! Try request_pad approach.";
+    }
+
+    // flush old frames
+    gst_element_send_event(m_pipeline, gst_event_new_flush_start());
+    gst_element_send_event(m_pipeline, gst_event_new_flush_stop(TRUE));
+
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PLAYING))
+    {
+        qDebug() << "ERROR: Could not start pipeline!";
+    }
+}
+
 void GStreamerWorker::createPipelineElements()
 {
     m_pipeline = gst_pipeline_new("screen-capture-pipeline");
@@ -68,7 +116,12 @@ void GStreamerWorker::createPipelineElements()
     m_tee = gst_element_factory_make("tee", "tee");
     m_origQueue = gst_element_factory_make("queue", "origQueue");
     m_delay = gst_element_factory_make("queue", "delay");
-    m_invert = gst_element_factory_make("frei0r-filter-invert0r", "invert");
+
+    m_uploadShader = gst_element_factory_make("glupload", "glup_shader");
+    m_shader = gst_element_factory_make("glshader", "invert");
+    g_object_set(G_OBJECT(m_shader), "fragment", shader_source, nullptr);
+    m_downloadShader = gst_element_factory_make("gldownload", "gldown_shader");
+
     m_mixer = gst_element_factory_make("compositor", "mixer");
     m_convert = gst_element_factory_make("videoconvert", "convert"); // glcolorconvert
     m_upload = gst_element_factory_make("glupload", "upload");
@@ -76,8 +129,9 @@ void GStreamerWorker::createPipelineElements()
 
     if ((nullptr == m_pipeline) || (nullptr == m_source) || (nullptr == m_capsfilter) ||
         (nullptr == m_download) || (nullptr == m_tee) || (nullptr == m_origQueue) ||
-        (nullptr == m_delay) || (nullptr == m_invert) || (nullptr == m_mixer) ||
-        (nullptr == m_convert) || (nullptr == m_upload) || (nullptr == m_sink))
+        (nullptr == m_delay) || (nullptr == m_downloadShader) || (nullptr == m_shader) ||
+        (nullptr == m_uploadShader) || (nullptr == m_mixer) || (nullptr == m_convert) ||
+        (nullptr == m_upload) || (nullptr == m_sink))
     {
         qDebug() << "ERROR: couldn't initiate pipeline!";
     }
@@ -92,14 +146,13 @@ void GStreamerWorker::CreateGstPipeline()
     gst_caps_unref(caps);
 
     g_object_set(m_delay,
-                 "min-threshold-time", (guint64)50000000,   // 50msec delay
+                 "min-threshold-time", (guint64)m_msecDelay * ONE_MILLION,   // 50msec delay
                  "max-size-time", (guint64)200000000,
                  "max-size-buffers", (guint)0,
                  "max-size-bytes", (guint)0,
                  nullptr);
 
     g_object_set(m_sink, "sync", FALSE, "qos", FALSE, nullptr); // this switches off redundant synchronization
-    g_object_set(m_mixer, "latency", (guint64)60000000, nullptr); // 60ms
 
     gst_bin_add_many(GST_BIN(m_pipeline),
                      m_source,
@@ -108,7 +161,9 @@ void GStreamerWorker::CreateGstPipeline()
                      m_tee,
                      m_origQueue,
                      m_delay,
-                     m_invert,
+                     m_uploadShader,
+                     m_shader,
+                     m_downloadShader,
                      m_mixer,
                      m_convert,
                      m_upload,
@@ -138,7 +193,7 @@ void GStreamerWorker::CreateGstPipeline()
     }
 
     // link screen delayed flow
-    if (!gst_element_link_many(m_tee, m_delay, m_invert, m_mixer, nullptr))
+    if (!gst_element_link_many(m_tee, m_delay, m_uploadShader, m_shader, m_downloadShader, m_mixer, nullptr))
     {
         qDebug() << "ERROR: couldn't link delayed flow pipeline elements!";
         return;

@@ -58,7 +58,7 @@ Window {
         anchors.top: parent.top
         anchors.margins: 20
         spacing: 20
-        opacity: 0.5
+        opacity: delaySliderId.pressed ? 1.0 : 0.5
         z: 1000
 
         Text {
@@ -67,13 +67,29 @@ Window {
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
+        // timer to prevent frequent updates
+        Timer {
+            id: updateDelayTimer
+            interval: 200 // not often than 200 msec
+            repeat: false
+            onTriggered: {
+                appViewModel.sliderValue = delaySliderId.value
+                console.log("Value updated to:", delaySliderId.value)
+            }
+        }
+
         Slider {
             id: delaySliderId
             from: 20
             to: 200
             stepSize: 10
             value: appViewModel.sliderValue
-            onMoved: appViewModel.sliderValue = value
+            onValueChanged: {
+                // if cjanged by dragging, not from code
+                if (pressed) {
+                    updateDelayTimer.restart()
+                }
+            }
 
             // Slider line
             background: Rectangle {

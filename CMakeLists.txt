@@ -8,6 +8,8 @@ set(GSTREAMER_ROOT "C:/Program Files/gstreamer/1.0/mingw_x86_64")
 set(GST_PLUGIN_PATH "C:/Program Files/gstreamer/1.0/mingw_x86_64/lib/gstreamer-1.0")
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 # set(PKG_CONFIG_EXECUTABLE "C:/Qt/Tools/mingw1310_64/bin/pkg-config.exe")
 # find_package(PkgConfig REQUIRED)
@@ -57,14 +59,39 @@ set_target_properties(appVideoMotionDetector PROPERTIES
 
 target_link_libraries(appVideoMotionDetector
     PRIVATE Qt6::Quick
+    PRIVATE Qt6::QuickControls2
+    PRIVATE Qt6::Widgets
     PRIVATE gstreamer-1.0
     PRIVATE gstvideo-1.0
     glib-2.0
     gobject-2.0
 )
 
-install(TARGETS appVideoMotionDetector
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+# install(TARGETS appVideoMotionDetector
+#     BUNDLE DESTINATION .
+#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+# )
+
+if(WIN32)
+    set(DEPLOY_PATH "D:/Projects/Deploy")
+    set(CMAKE_INSTALL_PREFIX "D:/Projects/Deploy")
+
+    # create deploy script for Qt 6
+    qt_generate_deploy_app_script(
+        TARGET appVideoMotionDetector
+        OUTPUT_SCRIPT deploy_script
+    )
+
+    # File copy rules
+    install(TARGETS appVideoMotionDetector
+        RUNTIME DESTINATION ${DEPLOY_PATH}
+    )
+
+    # run deploy script
+    install(SCRIPT ${deploy_script})
+
+    # additionally copy script to target folder
+    set(QT_DEPLOY_PREFIX ${DEPLOY_PATH})
+endif()
+
