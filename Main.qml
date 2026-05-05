@@ -1,3 +1,19 @@
+/**
+ * @file    Main.qml
+ * @author  Andrii Moroz (andriimoroz88@gmail.com)
+ * @brief   Here is main application window with all controls
+ *
+ * @version 1.0
+ * @date    2026-05-05
+ *
+ * @copyright Andrii Moroz (c) 2026
+ * All rights reserved
+ *
+ * WARNING: This code is confidential and proprietary.
+ * Unauthorized copying, distribution, or use of this file,
+ * in any medium, is strictly prohibited without author permission.
+ */
+
 import QtQuick
 import QtMultimedia
 import QtQuick.Controls

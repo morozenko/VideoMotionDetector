@@ -1,10 +1,26 @@
+/**
+ * @file    main.cpp
+ * @author  Andrii Moroz (andriimoroz88@gmail.com)
+ * @brief   Here app is created, initialized
+ *          Main window has property, to avoid self caturing
+ *
+ * @version 1.0
+ * @date    2026-05-05
+ *
+ * @copyright Andrii Moroz (c) 2026
+ * All rights reserved
+ *
+ * WARNING: This code is confidential and proprietary.
+ * Unauthorized copying, distribution, or use of this file,
+ * in any medium, is strictly prohibited without author permission.
+ */
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQmlContext>
-#include <QMessageBox>
 
 #include <memory>
 #include <windows.h>
@@ -32,67 +48,60 @@ void setNonCapturable(QQuickWindow *window)
 
 int main(int argc, char *argv[])
 {
-    try
-    {
-        // uncomment to have detailed gstreamer logs
-        // qputenv("GST_DEBUG", "3");
+    // uncomment to have detailed gstreamer logs
+    // qputenv("GST_DEBUG", "3");
 
-        QQuickStyle::setStyle("Material");
-        QGuiApplication app(argc, argv);
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    QQuickStyle::setStyle("Material");
+    QGuiApplication app(argc, argv);
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
-        // gst_init() is called in GStreamerWorker constructor
-        GStreamerWorker& gstWorker = GStreamerWorker::getInstance();
-        gstWorker.CreateGstPipeline();
+    // gst_init() is called in GStreamerWorker constructor
+    GStreamerWorker& gstWorker = GStreamerWorker::getInstance();
+    gstWorker.CreateGstPipeline();
 
-        // create ViewModel
-        std::shared_ptr<VideoMotionDetectorViewModel> viewModel =
-            std::make_shared<VideoMotionDetectorViewModel>(gstWorker);
+    // create ViewModel
+    std::shared_ptr<VideoMotionDetectorViewModel> viewModel =
+        std::make_shared<VideoMotionDetectorViewModel>(gstWorker);
 
-        QQmlApplicationEngine engine;
-        QObject::connect(
-            &engine,
-            &QQmlApplicationEngine::objectCreationFailed,
-            &app,
-            []() { QCoreApplication::exit(-1); },
-            Qt::QueuedConnection);
+    QQmlApplicationEngine engine;
+    QObject::connect(
+        &engine,
+        &QQmlApplicationEngine::objectCreationFailed,
+        &app,
+        []() { QCoreApplication::exit(-1); },
+        Qt::QueuedConnection);
 
-        engine.rootContext()->setContextProperty("appViewModel", viewModel.get());
+    engine.rootContext()->setContextProperty("appViewModel", viewModel.get());
 
-        engine.loadFromModule("VideoMotionDetector", "Main");
+    engine.loadFromModule("VideoMotionDetector", "Main");
 
-        QQuickItem* videoItem;
-        QQuickWindow* rootObject;
+    QQuickItem* videoItem;
+    QQuickWindow* rootObject;
 
-        // find and set the videoItem on the sink
-        rootObject = static_cast<QQuickWindow*> (engine.rootObjects().first());
-        videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
-        g_assert (videoItem);
+    // find and set the videoItem on the sink
+    rootObject = static_cast<QQuickWindow*> (engine.rootObjects().first());
+    videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
+    g_assert (videoItem);
 
-        // set window not capturable
-        setNonCapturable(rootObject);
+    // set window not capturable
+    setNonCapturable(rootObject);
 
-        // Update gstreamer context, after QML is initialized
-        GstElement* sink = gstWorker.getSink();
-        auto connection = QObject::connect(rootObject, &QQuickWindow::beforeRendering, rootObject, [sink, videoItem, rootObject]() {
-            // update captured frame size
-            GStreamerWorker::getInstance().updateVideoFrameSize(rootObject->x(),
-                                                                rootObject->y(),
-                                                                rootObject->width(),
-                                                                rootObject->height());
+    // Update gstreamer context, after QML is initialized
+    GstElement* sink = gstWorker.getSink();
+    auto connection = QObject::connect(rootObject, &QQuickWindow::beforeRendering, rootObject, [sink, videoItem, rootObject]() {
+        // update captured frame size
+        GStreamerWorker::getInstance().updateVideoFrameSize(rootObject->x(),
+                                                            rootObject->y(),
+                                                            rootObject->width(),
+                                                            rootObject->height());
 
-            if (sink) {
-                // Set window directly into sink
-                // It force qml6glsink to take context, created by QT
-                g_object_set(sink, "widget", videoItem, nullptr);
-                GStreamerWorker::getInstance().startPlaying();
-            }
-        }, Qt::SingleShotConnection);
+        if (sink) {
+            // Set window directly into sink
+            // It force qml6glsink to take context, created by QT
+            g_object_set(sink, "widget", videoItem, nullptr);
+            GStreamerWorker::getInstance().startPlaying();
+        }
+    }, Qt::SingleShotConnection);
 
-        return QCoreApplication::exec();
-    }
-    catch (const std::exception& e)
-    {
-        QMessageBox::critical(nullptr, "ERROR", e.what());
-    }
+    return QCoreApplication::exec();
 }

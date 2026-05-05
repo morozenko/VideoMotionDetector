@@ -9,7 +9,6 @@ set(GST_PLUGIN_PATH "C:/Program Files/gstreamer/1.0/mingw_x86_64/lib/gstreamer-1
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS QuickControls2)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 # set(PKG_CONFIG_EXECUTABLE "C:/Qt/Tools/mingw1310_64/bin/pkg-config.exe")
 # find_package(PkgConfig REQUIRED)
@@ -60,7 +59,6 @@ set_target_properties(appVideoMotionDetector PROPERTIES
 target_link_libraries(appVideoMotionDetector
     PRIVATE Qt6::Quick
     PRIVATE Qt6::QuickControls2
-    PRIVATE Qt6::Widgets
     PRIVATE gstreamer-1.0
     PRIVATE gstvideo-1.0
     glib-2.0

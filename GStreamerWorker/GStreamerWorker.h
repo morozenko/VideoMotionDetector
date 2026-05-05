@@ -1,3 +1,19 @@
+/**
+ * @file    GStreamerWorker.h
+ * @author  Andrii Moroz (andriimoroz88@gmail.com)
+ * @brief   GStreamerWorker do all work with gstreamer - initialization, configuring,
+ *          builds pipeline, starts, stop, etc
+ * @version 1.0
+ * @date    2026-05-05
+ *
+ * @copyright Andrii Moroz (c) 2026
+ * All rights reserved
+ *
+ * WARNING: This code is confidential and proprietary.
+ * Unauthorized copying, distribution, or use of this file,
+ * in any medium, is strictly prohibited without author permission.
+ */
+
 #ifndef GSTREAMERWORKER_H
 #define GSTREAMERWORKER_H
 
