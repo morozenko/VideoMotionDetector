@@ -30,6 +30,8 @@ qt_add_qml_module(appVideoMotionDetector
         SOURCES GStreamerWorker/GStreamerWorker.h
         SOURCES ViewModels/VideoMotionDetectorViewModel.h
         SOURCES ViewModels/VideoMotionDetectorViewModel.cpp
+        SOURCES Logger/ApplicationLogger.h
+        SOURCES Logger/ApplicationLogger.cpp
 )
 
 target_precompile_headers(appVideoMotionDetector PRIVATE
@@ -81,10 +83,21 @@ if(WIN32)
         OUTPUT_SCRIPT deploy_script
     )
 
+    # qt_generate_deploy_app_script(
+    #     TARGET appVideoMotionDetector
+    #     OUTPUT_SCRIPT deploy_script
+    #     # Add this, than script will know were to look for imports
+    #     DEPLOY_USER_OPTIONS "--qmldir;${CMAKE_CURRENT_SOURCE_DIR}"
+    # )
+
     # File copy rules
     install(TARGETS appVideoMotionDetector
         RUNTIME DESTINATION ${DEPLOY_PATH}
     )
+
+    # install(TARGETS appVideoMotionDetector
+    #     RUNTIME DESTINATION .
+    # )
 
     # run deploy script
     install(SCRIPT ${deploy_script})

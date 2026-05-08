@@ -19,7 +19,6 @@
  * in any medium, is strictly prohibited without author permission.
  */
 
-
 #include <QDebug>
 
 #include "GStreamerWorker.h"
@@ -33,6 +32,47 @@ const gchar *shader_source =
     "  vec4 rgba = texture2D(tex, v_texcoord);"
     "  gl_FragColor = vec4(1.0 - rgba.rgb, rgba.a);"
     "}";
+
+void handle_gst_error(GstElement* pipeline)
+{
+    GstBus* bus = gst_element_get_bus(pipeline);
+
+    // Чекаємо повідомлення про помилку або завершення (EOS)
+    GstMessage* msg = gst_bus_timed_pop_filtered(
+        bus,
+        GST_CLOCK_TIME_NONE,
+        static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS)
+        );
+
+    if (msg != nullptr)
+    {
+        if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR)
+        {
+            GError* err = nullptr;
+            gchar* debug_info = nullptr;
+
+            gst_message_parse_error(msg, &err, &debug_info);
+
+            // Використовуємо std::cerr для виводу в C++ стилі
+            qDebug() << "Error from element: " << GST_OBJECT_NAME(msg->src);
+            qDebug() << "Message: " << err->message;
+            if (debug_info)
+            {
+                qDebug() << "Debug info: " << debug_info;
+            }
+
+            g_error_free(err);
+            g_free(debug_info);
+        }
+        else if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS)
+        {
+            qDebug() << "(End-Of-Stream).";
+        }
+        gst_message_unref(msg);
+    }
+
+    gst_object_unref(bus);
+}
 
 GStreamerWorker::GStreamerWorker()
 {
@@ -275,6 +315,7 @@ void GStreamerWorker::startPlaying() const
     if (GST_STATE_CHANGE_FAILURE == ret)
     {
         qDebug() << "ERROR: cant change state to PLAYING!";
+        handle_gst_error(m_pipeline);
         return;
     }
 }
@@ -284,6 +325,7 @@ void GStreamerWorker::updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t widt
     if (!gst_element_set_state(m_pipeline, GST_STATE_PAUSED))
     {
         qDebug() << "ERROR: Could not pause pipeline!";
+        handle_gst_error(m_pipeline);
     }
 
     // qDebug() << "x: " << x << " y: " << y << " width: " << width << " height: " << height;
@@ -314,5 +356,6 @@ void GStreamerWorker::updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t widt
     if (!gst_element_set_state(m_pipeline, GST_STATE_PLAYING))
     {
         qDebug() << "ERROR: Could not start pipeline!";
+        handle_gst_error(m_pipeline);
     }
 }

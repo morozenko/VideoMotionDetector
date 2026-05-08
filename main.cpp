@@ -27,6 +27,7 @@
 
 #include "GStreamerWorker/GStreamerWorker.h"
 #include "ViewModels/VideoMotionDetectorViewModel.h"
+#include "Logger/ApplicationLogger.h"
 
 void setNonCapturable(QQuickWindow *window)
 {
@@ -49,7 +50,10 @@ void setNonCapturable(QQuickWindow *window)
 int main(int argc, char *argv[])
 {
     // uncomment to have detailed gstreamer logs
-    // qputenv("GST_DEBUG", "3");
+    qputenv("GST_DEBUG", "3");
+
+    ApplicationLogger& logger = ApplicationLogger::getInstance();
+    qInstallMessageHandler(logger.messageHandler);
 
     QQuickStyle::setStyle("Material");
     QGuiApplication app(argc, argv);
