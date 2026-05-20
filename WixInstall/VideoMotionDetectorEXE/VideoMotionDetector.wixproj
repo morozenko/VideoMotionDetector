@@ -1,0 +1,35 @@
+<Project Sdk="WixToolset.Sdk/5.0.1">
+	<PropertyGroup>
+		<!-- Create EXE, which combine GStreamer and VideoDetector MSI -->
+		<OutputType>Bundle</OutputType>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
+    </PropertyGroup>
+	
+	<PropertyGroup>
+	  <!-- Ignore heat warnings about .NET package -->
+	  <SuppressSpecificWarnings>$(SuppressSpecificWarnings);5151</SuppressSpecificWarnings>
+	  <HarvestDirectoryAutogen>true</HarvestDirectoryAutogen>
+	</PropertyGroup>
+  
+	<PropertyGroup>
+	    <!-- Default path provided -->
+		<DeployedFilesPath Condition="'$(DeployedFilesPath)' == ''">D:\Projects\Deploy</DeployedFilesPath>
+        <DefineConstants>SourceDir=$(DeployedFilesPath);DeployedFilesPath=$(DeployedFilesPath)</DefineConstants>
+	</PropertyGroup>
+	
+	<!--ItemGroup>
+	  <Compile Include="Bundle.wxs" />
+	</ItemGroup-->
+
+	<ItemGroup>
+	  <ProjectReference Include="..\VideoMotionDetectorMSI\VideoMotionDetectorMSI.wixproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="WixToolset.Bal.wixext" Version="5.0.1" />
+		<PackageReference Include="WixToolset.Util.wixext" Version="5.0.1" />
+		
+		<WixExtension Include="WixToolset.Bal.wixext" />
+        <WixExtension Include="WixToolset.Util.wixext" />
+    </ItemGroup>
+</Project>

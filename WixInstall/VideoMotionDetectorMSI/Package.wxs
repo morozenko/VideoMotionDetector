@@ -1,0 +1,51 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" 
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+	<Package Name="VideoMotionDetectorMSI"
+		Language="1058" 
+		Version="1.0.0" 
+		Manufacturer="Andrii Moroz" 
+		UpgradeCode="2909476C-0A86-4F1E-9C8F-7C90F57C8A9E">
+
+		<!-- gstreamer installation folder -->
+		<Property Id="GSTREAMER_DIR" Secure="yes" />
+		
+		<PropertyRef Id="GSTREAMER_BIN_DIR" />
+
+		<StandardDirectory Id="ProgramFiles64Folder">
+		  <Directory Id="INSTALLFOLDER" Name="VideoMotionDetector" />
+		</StandardDirectory>
+
+		<ComponentGroup Id="ProductComponents">
+		  <!-- Files from Deploy goes here -->
+		  <ComponentGroupRef Id="DynamicLibraries" />
+
+		  <!-- Update PATH with gstreamer value -->
+		  <Component Id="UpdatePath" Directory="INSTALLFOLDER" Guid="*">
+			<RegistryValue Root="HKMU" Key="Software\VideoMotionDetector" Name="PathUpdated" Type="integer" Value="1" KeyPath="yes" />
+			
+			<!-- Add VideoMotionDetector to PATH [INSTALLFOLDER] -->
+			<Environment Id="AddAppToPath" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" />
+			<Environment Id="AddAppBinToPath" Name="PATH" Value="[INSTALLFOLDER]\bin" Part="last" Action="set" System="yes" />
+			
+			<!-- Add GStreamer folders to PATH -->
+			<Environment Id="AddGStreamerBinToPath" Name="PATH" Value="[GSTREAMER_BIN_DIR]\bin" Part="last" Action="set" System="yes" />
+			<Environment Id="AddGStreamerLibToPath" Name="PATH" Value="[GSTREAMER_BIN_DIR]\lib\gstreamer-1.0" Part="last" Action="set" System="yes" />
+		  </Component>
+		</ComponentGroup>
+
+		<Feature Id="Main">
+		  <ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Package>
+	
+	<Fragment>
+		<Property Id="GSTREAMER_BIN_DIR" Secure="yes">
+		  <RegistrySearch Id="FindGStreamer" 
+						  Root="HKLM" 
+						  Key="SOFTWARE\GStreamer1.0\x86_64" 
+						  Name="InstallDir" 
+						  Type="raw" />
+		</Property>
+	</Fragment>
+  
+</Wix>

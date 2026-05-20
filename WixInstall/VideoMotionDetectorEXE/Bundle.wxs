@@ -1,0 +1,50 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" 
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Bundle Name="VideoMotionDetector" 
+          Version="1.0.0" 
+          UpgradeCode="2909476C-0A86-4F1E-9C8F-7C90F57C8A9E" 
+          Manufacturer="Andrii Moroz">
+				 
+	<util:RegistrySearch Id="GetGStreamerPath"
+				 Root="HKLM"
+				 Key="SOFTWARE\GStreamer1.0\x86_64"
+				 Value="InstallDir"
+				 Variable="GStreamerPath" />
+				 
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication Theme="hyperlinkLicense" LicenseUrl=""/>
+    </BootstrapperApplication>
+
+    <Chain>				
+		<!-- Install GStreamer -->
+		<!-- InstallArguments="/SILENT /ALLUSERS /ADDLOCAL=ALL /SP- /TYPE=complete /COMPONENTS=*" -->
+		<ExePackage SourceFile="$(var.DeployedFilesPath)\gstreamer-1.0-mingw-x86_64-1.29.1.1.exe"
+            Vital="yes"
+            Permanent="yes"
+            PerMachine="yes"
+			LogPathVariable="GStreamerLogPath"
+            InstallArguments="LOG=&quot;C:\tmp\install.log&quot; /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /TYPE=complete /Components=base_crypto,base_crypto\devel,base_crypto\runtime,base_system_1_0,base_system_1_0\devel,base_system_1_0\runtime,gstreamer_1_0_analytics,gstreamer_1_0_analytics\devel,gstreamer_1_0_analytics\runtime,gstreamer_1_0_capture,gstreamer_1_0_capture\devel,gstreamer_1_0_capture\runtime,gstreamer_1_0_codecs,gstreamer_1_0_codecs\devel,gstreamer_1_0_codecs\runtime,gstreamer_1_0_codecs_gpl,gstreamer_1_0_codecs_gpl\devel,gstreamer_1_0_codecs_gpl\runtime,gstreamer_1_0_codecs_gpl_restricted,gstreamer_1_0_codecs_gpl_restricted\devel,gstreamer_1_0_codecs_gpl_restricted\runtime,gstreamer_1_0_codecs_restricted,gstreamer_1_0_codecs_restricted\devel,gstreamer_1_0_codecs_restricted\runtime,gstreamer_1_0_core,gstreamer_1_0_core\devel,gstreamer_1_0_core\runtime,gstreamer_1_0_devtools,gstreamer_1_0_devtools\devel,gstreamer_1_0_devtools\runtime,gstreamer_1_0_dvd_gpl,gstreamer_1_0_dvd_gpl\devel,gstreamer_1_0_dvd_gpl\runtime,gstreamer_1_0_editing,gstreamer_1_0_editing\devel,gstreamer_1_0_editing\runtime,gstreamer_1_0_effects,gstreamer_1_0_effects\devel,gstreamer_1_0_effects\runtime,gstreamer_1_0_encoding,gstreamer_1_0_encoding\devel,gstreamer_1_0_encoding\runtime,gstreamer_1_0_gtk,gstreamer_1_0_gtk\devel,gstreamer_1_0_gtk\runtime,gstreamer_1_0_libav,gstreamer_1_0_libav\devel,gstreamer_1_0_libav\runtime,gstreamer_1_0_net,gstreamer_1_0_net\devel,gstreamer_1_0_net\runtime,gstreamer_1_0_net_restricted,gstreamer_1_0_net_restricted\devel,gstreamer_1_0_net_restricted\runtime,gstreamer_1_0_playback,gstreamer_1_0_playback\devel,gstreamer_1_0_playback\runtime,gstreamer_1_0_qt6,gstreamer_1_0_qt6\devel,gstreamer_1_0_qt6\runtime,gstreamer_1_0_system,gstreamer_1_0_system\devel,gstreamer_1_0_system\runtime,gstreamer_1_0_visualizers,gstreamer_1_0_visualizers\devel,gstreamer_1_0_visualizers\runtime,vsintegration_1_0_devel">
+			<!--Payload SourceFile="$(var.DeployedFilesPath)\gstreamer_setup.inf" /-->			
+		</ExePackage>
+		
+		<!--ExePackage SourceFile="C:\Windows\System32\cmd.exe"
+            Id="GStreamerMSVCInstall"
+            Vital="yes"
+            Permanent="yes"
+            PerMachine="yes"
+            DisplayName="Installing GStreamer"
+            LogPathVariable="GStreamerLogPath"
+            InstallArguments="/c &quot;&quot;[WixBundleExecutePackageCacheFolder]\gstreamer-1.0-mingw-x86_64-1.29.1.1.exe&quot; /LOG=&quot;C:\tmp\install.log&quot; /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /TYPE=complete&quot;">
+			<Payload SourceFile="$(var.DeployedFilesPath)\gstreamer-1.0-mingw-x86_64-1.29.1.1.exe" />
+		</ExePackage-->
+
+      <!-- VideoMotionDetector MSI -->
+      <MsiPackage SourceFile="VideoMotionDetectorMSI.msi" Vital="yes">
+        <!-- Set gstreamer path to MSI -->
+        <MsiProperty Name="GSTREAMER_DIR" Value="[GStreamerPath]" />
+      </MsiPackage>
+    </Chain>
+  </Bundle>
+</Wix>

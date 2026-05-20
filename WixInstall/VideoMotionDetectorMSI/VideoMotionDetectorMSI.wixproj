@@ -1,0 +1,47 @@
+<Project Sdk="WixToolset.Sdk/5.0.1">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+  </PropertyGroup>
+  
+    <PropertyGroup>
+	    <!-- Default path provided -->
+		<DeployedFilesPath Condition="'$(DeployedFilesPath)' == ''">D:\Projects\Deploy</DeployedFilesPath>
+        <DefineConstants>SourceDir=$(DeployedFilesPath);DeployedFilesPath=$(DeployedFilesPath)</DefineConstants>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+	  <Platform>x64</Platform>
+	  <InstallerPlatform>x64</InstallerPlatform>
+	</PropertyGroup>
+	
+  <ItemGroup>
+	  <!-- WiX collect files from this directory -->
+	  <HarvestDirectory Include="$(DeployedFilesPath)">
+		<ComponentGroupName>DynamicLibraries</ComponentGroupName>
+		<DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
+		<PreprocessorVariable>var.SourceDir</PreprocessorVariable>
+		<!--Exclude Files="$(DeployedFilesPath)\libstdc++-6.dll" /-->
+		<Exclude>$(DeployedFilesPath)\libstdc++-6.dll</Exclude>
+		<Exclude>libstdc++-6.dll</Exclude>
+		<Exclude>$(DeployedFilesPath)\bin\libstdc++-6.dll</Exclude>
+		<Exclude>bin\libstdc++-6.dll</Exclude>
+		<Exclude>gstreamer-1.0-mingw-x86_64-1.29.1.1.exe</Exclude>
+		<Exclude>$(DeployedFilesPath)\gstreamer-1.0-mingw-x86_64-1.29.1.1.exe</Exclude>
+		<!--Transforms>ExcludeFile.xslt</Transforms-->
+		<Bitness>always64</Bitness>
+	  </HarvestDirectory>
+	</ItemGroup>
+	
+	<!--ItemGroup>
+	  <Compile Include="Package.wxs" />
+	</ItemGroup-->
+	
+	<ItemGroup>
+		<PackageReference Include="WixToolset.Bal.wixext" Version="5.0.1" />
+		<PackageReference Include="WixToolset.Util.wixext" Version="5.0.1" />
+		<PackageReference Include="WixToolset.Heat" Version="5.0.1" />
+		
+		<WixExtension Include="WixToolset.Bal.wixext" />
+        <WixExtension Include="WixToolset.Util.wixext" />
+    </ItemGroup>
+</Project>
