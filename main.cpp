@@ -24,10 +24,35 @@
 
 #include <memory>
 #include <windows.h>
+#include <io.h>
 
 #include "GStreamerWorker/GStreamerWorker.h"
 #include "ViewModels/VideoMotionDetectorViewModel.h"
 #include "Logger/ApplicationLogger.h"
+
+void redirectAllOutputToFile(const char* fileName)
+{
+    // Create/Open the file
+    QFile* file = new QFile(fileName);
+    if (file->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+    {
+
+        // get windows handle
+        HANDLE hFile = (HANDLE)_get_osfhandle(file->handle());
+
+        // redirect system output (to capture linked DLL logs)
+        SetStdHandle(STD_OUTPUT_HANDLE, hFile);
+        SetStdHandle(STD_ERROR_HANDLE, hFile);
+
+        // redirect C streams (printf/fprintf)
+        _dup2(file->handle(), _fileno(stdout));
+        _dup2(file->handle(), _fileno(stderr));
+
+        // switch off buffering
+        setvbuf(stdout, NULL, _IONBF, 0);
+        setvbuf(stderr, NULL, _IONBF, 0);
+    }
+}
 
 void setNonCapturable(QQuickWindow *window)
 {
@@ -54,6 +79,7 @@ int main(int argc, char *argv[])
 
     ApplicationLogger& logger = ApplicationLogger::getInstance();
     qInstallMessageHandler(logger.messageHandler);
+    redirectAllOutputToFile(ApplicationLogger::getLogFileName());
 
     QQuickStyle::setStyle("Material");
     QGuiApplication app(argc, argv);

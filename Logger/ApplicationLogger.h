@@ -39,6 +39,8 @@ public:
     void logWarning(const std::string& warningMsg);
     void logDebug(const std::string& debugMsg);
 
+    static const char* getLogFileName();
+
 private:
     ApplicationLogger();
     void initOnce();
@@ -50,6 +52,8 @@ private:
 
     QFile m_logFile;
     QTextStream m_outStream;
+
+    static const char* LOG_FILE_NAME;
 };
 
 #endif // APPLICATIONLOGGER_H

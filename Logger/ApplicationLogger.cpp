@@ -17,7 +17,7 @@
 
 #include "ApplicationLogger.h"
 
-const char* LOG_FILE_NAME = "VideoMotionDetector.log";
+const char* ApplicationLogger::LOG_FILE_NAME = "VideoMotionDetector.log";
 
 ApplicationLogger::ApplicationLogger()
     : m_logFile(LOG_FILE_NAME)  // open it beyond constructor, You should know why
@@ -35,6 +35,11 @@ ApplicationLogger& ApplicationLogger::getInstance()
     static ApplicationLogger instance;
     instance.initOnce();
     return instance;
+}
+
+const char* ApplicationLogger::getLogFileName()
+{
+    return LOG_FILE_NAME;
 }
 
 void ApplicationLogger::initOnce()
