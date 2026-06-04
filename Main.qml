@@ -4,7 +4,7 @@
  * @brief   Here is main application window with all controls
  *
  * @version 1.0
- * @date    2026-05-05
+ * @date    2026-06-03
  *
  * @copyright Andrii Moroz (c) 2026
  * All rights reserved
@@ -14,203 +14,85 @@
  * in any medium, is strictly prohibited without author permission.
  */
 
-import QtQuick
-import QtMultimedia
-import QtQuick.Controls
-import QtQuick.Window 2.2
-import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
 
 Window {
-    id: currentWindowId
-
-    x: appViewModel.X0
-    y: appViewModel.Y0
-    width: appViewModel.frameWidth
-    height: appViewModel.frameHeight
-    maximumWidth: 1920
-    maximumHeight: 1080
-
-    onWidthChanged: resizeTimer.restart()
-    onHeightChanged: resizeTimer.restart()
-    onXChanged: resizeTimer.restart()
-    onYChanged: resizeTimer.restart()
-
+    id: mainWindow
+    width: 400
+    height: 300
     visible: true
-    flags: Qt.FramelessWindowHint
+    title: "Video Fly"
 
-    // Edge thickness for mouse detection
-    property int resizeMargin: 8
+    // Nice grey background color for the main window
+    color: "#E0E0E0"
 
-    title: qsTr("VideoMotionDetector")
-
-    // timer for handling resize/dragging
-    Timer {
-        id: resizeTimer
-        interval: 200 // delay in msec
-        repeat: false
-        onTriggered: {
-            // don't allow coordinates become negative, when window is dragged
-            let safeX = Math.max(0, currentWindowId.x);
-            let safeY = Math.max(0, currentWindowId.y);
-
-            // rounded values
-            let safeWidth = Math.floor(currentWindowId.width / 16) * 16;
-            let safeHeight = Math.floor(currentWindowId.height / 2) * 2;
-
-            console.log("Updating GStreamer width: ", safeWidth, " height: ", safeHeight);
-
-            // update viewModel
-            appViewModel.frameWidth = safeWidth;
-            appViewModel.frameHeight = safeHeight;
-            appViewModel.X0 = safeX
-            appViewModel.Y0 = safeY
-        }
-    }
-
-    // slider for changing delay
-    Column {
-        id: columnId
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: 20
+    // Grid layout ensures all child buttons match the column width
+    Grid {
+        id: buttonContainer
+        anchors.centerIn: parent
+        columns: 1
         spacing: 20
-        opacity: delaySliderId.pressed ? 1.0 : 0.5
-        z: 1000
 
-        Text {
-            text: "Delay: " + appViewModel.sliderValue
-            font.pixelSize: 20
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
+        // Explicitly force the grid layout width to size up to the largest button inside it
+        width: Math.max(filterButton.implicitWidth, dualScreenButton.implicitWidth)
 
-        // timer to prevent frequent updates
-        Timer {
-            id: updateDelayTimer
-            interval: 200 // not often than 200 msec
-            repeat: false
-            onTriggered: {
-                appViewModel.sliderValue = delaySliderId.value
-                console.log("Value updated to:", delaySliderId.value)
-            }
-        }
+        Button {
+            id: filterButton
+            text: "Open filter view"
 
-        Slider {
-            id: delaySliderId
-            from: 20
-            to: 200
-            stepSize: 10
-            value: appViewModel.sliderValue
-            onValueChanged: {
-                // if cjanged by dragging, not from code
-                if (pressed) {
-                    updateDelayTimer.restart()
-                }
-            }
+            // Force this button to take full width of the container
+            width: parent.width
 
-            // Slider line
-            background: Rectangle {
-                x: delaySliderId.leftPadding
-                y: delaySliderId.topPadding + delaySliderId.availableHeight / 2 - height / 2
-                implicitWidth: 200
-                implicitHeight: 4
-                width: delaySliderId.availableWidth
-                height: implicitHeight
-                radius: 2
-                color: "#60525252" // Grey
-            }
-
-            // slider handle
-            handle: Rectangle {
-                x: delaySliderId.leftPadding + delaySliderId.visualPosition * (delaySliderId.availableWidth - width)
-                y: delaySliderId.topPadding + delaySliderId.availableHeight / 2 - height / 2
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: 10 // Circle
-                color: "white"
-                border.color: "#bdbebf"
-            }
-        }
-    }
-
-    GstGLQt6VideoItem {
-            id: videoOutput
-            objectName: "videoOutputItem" // Used by C++ to find the item
-            anchors.fill: parent
-        }
-
-    MouseArea {
-        anchors.fill: parent
-        onPressed: (mouse) => {
-            // Allows moving the window by dragging anywhere
-            if (mouse.button === Qt.LeftButton) {
-                currentWindowId.startSystemMove();
-            }
-        }
-    }
-
-    MouseArea {
-        id: resizeAreaId
-        anchors.fill: parent
-        hoverEnabled: true
-
-        // Internal function to determine which edge we are near
-        function getEdges(x, y) {
-            let edges = 0;
-            if (x < resizeMargin) edges |= Qt.LeftEdge;
-            if (x > width - resizeMargin) edges |= Qt.RightEdge;
-            if (y < resizeMargin) edges |= Qt.TopEdge;
-            if (y > height - resizeMargin) edges |= Qt.BottomEdge;
-            return edges;
-        }
-
-        // Update cursor shape based on edge
-        onPositionChanged: (mouse) => {
-            let edges = getEdges(mouse.x, mouse.y);
-            if (edges === (Qt.LeftEdge | Qt.TopEdge) || edges === (Qt.RightEdge | Qt.BottomEdge))
-                cursorShape = Qt.SizeFDiagCursor;
-            else if (edges === (Qt.RightEdge | Qt.TopEdge) || edges === (Qt.LeftEdge | Qt.BottomEdge))
-                cursorShape = Qt.SizeBDiagCursor;
-            else if (edges & (Qt.LeftEdge | Qt.RightEdge))
-                cursorShape = Qt.SizeHorCursor;
-            else if (edges & (Qt.TopEdge | Qt.BottomEdge))
-                cursorShape = Qt.SizeVerCursor;
-            else
-                cursorShape = Qt.ArrowCursor;
-        }
-
-        onPressed: (mouse) => {
-            let edges = getEdges(mouse.x, mouse.y);
-            if (edges !== 0) {
-                currentWindowId.startSystemResize(edges);
-            } else if (mouse.button === Qt.LeftButton) {
-                currentWindowId.startSystemMove(); // Drag to move if not resizing
-            }
-        }
-    }
-
-    // close button
-    Rectangle {
-        id: closeButtonId
-        width: 30
-        height: 30
-        color: closeMouseArea.containsMouse ? "#BFe74c3c" : "#60525252"
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 5
-        radius: 4
-
-        Text {
-            text: "✕"
-            color: "white"
-            anchors.centerIn: parent
-            font.pixelSize: 16
-        }
-
-        MouseArea {
-            id: closeMouseArea
-            anchors.fill: parent
             hoverEnabled: true
-            onClicked: currentWindowId.close()
+
+            background: Rectangle {
+                // Dark grey when normal, slightly lighter when hovered/pressed, transparent if disabled
+                color: filterButton.enabled ?
+                       (filterButton.down ? "#616161" :
+                       (filterButton.hovered ? "#424242" : "#212121")) : "#BDBDBD"
+                radius: 4
+            }
+
+            contentItem: Text {
+                text: filterButton.text
+                font.pixelSize: 14
+                color: filterButton.enabled ? "white" : "#757575" // White text when active
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
+            onClicked: {
+                viewModel.onFilterButtonClicked()
+            }
+        }
+
+        Button {
+            id: dualScreenButton
+            text: "Open dual screen view"
+
+            // Force this button to take full width of the container
+            width: parent.width
+
+            enabled: (viewModel.screensAmount >= 2) && (viewModel.usbVideoEnbled === true)
+
+            background: Rectangle {
+                // Dark grey when normal, slightly lighter when hovered/pressed, muted grey if disabled
+                color: dualScreenButton.enabled ? (dualScreenButton.down ? "#424242" : "#212121") : "#9E9E9E"
+                radius: 4
+                // Visual boundary indicator for disabled state
+                border.color: dualScreenButton.enabled ? "transparent" : "#757575"
+                border.width: 1
+            }
+
+            contentItem: Text {
+                text: dualScreenButton.text
+                font.pixelSize: 14
+                color: dualScreenButton.enabled ? "white" : "#E0E0E0" // White text when active, light grey when disabled
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
         }
     }
 }

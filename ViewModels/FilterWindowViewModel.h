@@ -1,5 +1,5 @@
 /**
- * @file    VideoMotionDetectorViewModel.h
+ * @file    FilterWindowViewModel.h
  * @author  Andrii Moroz (andriimoroz88@gmail.com)
  * @brief   VideoMotionDetectorViewModel responsible for properties in main view
  *
@@ -14,14 +14,14 @@
  * in any medium, is strictly prohibited without author permission.
  */
 
-#ifndef VIDEOMOTIONDETECTORVIEWMODEL_H
-#define VIDEOMOTIONDETECTORVIEWMODEL_H
+#ifndef FILTERWINDOWVIEWMODEL_H
+#define FILTERWINDOWVIEWMODEL_H
 
 #include <QObject>
 
 #include "GStreamerWorker/GStreamerWorker.h"
 
-class VideoMotionDetectorViewModel : public QObject
+class FilterWindowViewModel : public QObject
 {
     Q_OBJECT
 
@@ -32,8 +32,8 @@ class VideoMotionDetectorViewModel : public QObject
     Q_PROPERTY(uint16_t sliderValue READ getSliderValue WRITE setSliderValue NOTIFY sliderValueChanged)
 
 public:
-    VideoMotionDetectorViewModel(GStreamerWorker& worker);
-    ~VideoMotionDetectorViewModel() = default;
+    FilterWindowViewModel(GStreamerWorker& worker);
+    ~FilterWindowViewModel() = default;
 
     uint16_t getX0() const;
     uint16_t getY0() const;
@@ -67,4 +67,4 @@ private:
     GStreamerWorker& m_worker;
 };
 
-#endif // VIDEOMOTIONDETECTORVIEWMODEL_H
+#endif // FILTERWINDOWVIEWMODEL_H

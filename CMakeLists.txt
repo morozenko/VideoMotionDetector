@@ -9,6 +9,7 @@ set(GST_PLUGIN_PATH "C:/Program Files/gstreamer/1.0/mingw_x86_64/lib/gstreamer-1
 
 find_package(Qt6 REQUIRED COMPONENTS Quick)
 find_package(Qt6 REQUIRED COMPONENTS QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 
 # set(PKG_CONFIG_EXECUTABLE "C:/Qt/Tools/mingw1310_64/bin/pkg-config.exe")
 # find_package(PkgConfig REQUIRED)
@@ -28,10 +29,19 @@ qt_add_qml_module(appVideoMotionDetector
         Main.qml
         SOURCES GStreamerWorker/GStreamerWorker.cpp
         SOURCES GStreamerWorker/GStreamerWorker.h
-        SOURCES ViewModels/VideoMotionDetectorViewModel.h
-        SOURCES ViewModels/VideoMotionDetectorViewModel.cpp
+        SOURCES ViewModels/FilterWindowViewModel.h
+        SOURCES ViewModels/FilterWindowViewModel.cpp
         SOURCES Logger/ApplicationLogger.h
         SOURCES Logger/ApplicationLogger.cpp
+        SOURCES VideoManager/VideoDeviceManager.h
+        SOURCES VideoManager/VideoDeviceManager.cpp
+        QML_FILES qml/FilterScreenWindow.qml
+        SOURCES ViewModels/StartWindowViewModel.h
+        SOURCES ViewModels/StartWindowViewModel.cpp
+        SOURCES ApplicationController.h
+        SOURCES ApplicationController.cpp
+        QML_FILES qml/FilterScreenWindow.qml
+        SOURCES ViewModels/FilterWindowViewModel.cpp ViewModels/FilterWindowViewModel.h
 )
 
 target_precompile_headers(appVideoMotionDetector PRIVATE
@@ -51,16 +61,13 @@ target_link_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/lib/st
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 set_target_properties(appVideoMotionDetector PROPERTIES
-#    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appVideoMotionDetector
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-    MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
 
 target_link_libraries(appVideoMotionDetector
     PRIVATE Qt6::Quick
     PRIVATE Qt6::QuickControls2
+    PRIVATE Qt6::Multimedia
     PRIVATE gstreamer-1.0
     PRIVATE gstvideo-1.0
     glib-2.0
