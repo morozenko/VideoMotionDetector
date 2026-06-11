@@ -31,18 +31,20 @@ class StartWindowViewModel : public QObject
     Q_PROPERTY(uint8_t screensAmount READ screensAmount NOTIFY screensAmountChanged)
 
 public:
-    StartWindowViewModel(const VideoDeviceManager& videoDeviceManager);
+    StartWindowViewModel(const VideoDeviceManager* videoDeviceManager);
 
     bool usbVideoEnbled();
     uint8_t screensAmount();
 
     Q_INVOKABLE void onFilterButtonClicked();
+    Q_INVOKABLE void onDualViewButtonClicked();
 
 signals:
     void usbVideoEnbledChanged();
     void screensAmountChanged();
 
     void goToFilterWindow();
+    void goToDualView();
 
 private:
     bool m_usbVideoEnabled;

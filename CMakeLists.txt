@@ -26,7 +26,10 @@ qt_add_executable(appVideoMotionDetector
 qt_add_qml_module(appVideoMotionDetector
     URI VideoMotionDetector
     QML_FILES
-        Main.qml
+            Main.qml
+            qml/FilterScreenWindow.qml
+            qml/VideoScreenWindow.qml
+
         SOURCES GStreamerWorker/GStreamerWorker.cpp
         SOURCES GStreamerWorker/GStreamerWorker.h
         SOURCES ViewModels/FilterWindowViewModel.h
@@ -35,13 +38,14 @@ qt_add_qml_module(appVideoMotionDetector
         SOURCES Logger/ApplicationLogger.cpp
         SOURCES VideoManager/VideoDeviceManager.h
         SOURCES VideoManager/VideoDeviceManager.cpp
-        QML_FILES qml/FilterScreenWindow.qml
         SOURCES ViewModels/StartWindowViewModel.h
         SOURCES ViewModels/StartWindowViewModel.cpp
         SOURCES ApplicationController.h
         SOURCES ApplicationController.cpp
-        QML_FILES qml/FilterScreenWindow.qml
-        SOURCES ViewModels/FilterWindowViewModel.cpp ViewModels/FilterWindowViewModel.h
+        SOURCES GStreamerWorker/BaseGStreamerWorker.h
+        SOURCES GStreamerWorker/BaseGStreamerWorker.cpp
+        SOURCES ViewModels/VideoWindowViewModel.h
+        SOURCES ViewModels/VideoWindowViewModel.cpp
 )
 
 target_precompile_headers(appVideoMotionDetector PRIVATE
@@ -62,6 +66,16 @@ target_link_directories(appVideoMotionDetector PRIVATE "${GSTREAMER_ROOT}/lib/st
 # explicit, fixed bundle identifier manually though.
 set_target_properties(appVideoMotionDetector PROPERTIES
     WIN32_EXECUTABLE TRUE
+)
+
+# increase memmory model to avoid 32 bit pseudo relocation error
+target_compile_options(appVideoMotionDetector PRIVATE -mcmodel=large)
+target_compile_options(appVideoMotionDetector PRIVATE -fno-PIC)
+set_target_properties(appVideoMotionDetector PROPERTIES POSITION_INDEPENDENT_CODE OFF)
+
+# linker should support extended address table and DLL relocation
+target_link_options(appVideoMotionDetector PRIVATE
+    "-Wl,--enable-auto-import"
 )
 
 target_link_libraries(appVideoMotionDetector

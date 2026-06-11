@@ -75,7 +75,7 @@ Window {
             // Force this button to take full width of the container
             width: parent.width
 
-            enabled: (viewModel.screensAmount >= 2) && (viewModel.usbVideoEnbled === true)
+            enabled: /*(viewModel.screensAmount >= 2) &&*/ (viewModel.usbVideoEnbled === true)
 
             background: Rectangle {
                 // Dark grey when normal, slightly lighter when hovered/pressed, muted grey if disabled
@@ -92,6 +92,10 @@ Window {
                 color: dualScreenButton.enabled ? "white" : "#E0E0E0" // White text when active, light grey when disabled
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
+            }
+
+            onClicked: {
+                viewModel.onDualViewButtonClicked()
             }
         }
     }

@@ -27,6 +27,8 @@
 class QQmlApplicationEngine;
 class StartWindowViewModel;
 class FilterWindowViewModel;
+class VideoWindowViewModel;
+class VideoDeviceManager;
 
 class ApplicationController : public QObject
 {
@@ -43,6 +45,7 @@ public:
 
 public slots:
     void openFilterWindow();
+    void openDoubleView();
 
 private:
     explicit ApplicationController(QObject* parent = nullptr);
@@ -56,6 +59,8 @@ private:
 
     std::unique_ptr<StartWindowViewModel> m_startWindowViewModel;
     std::unique_ptr<FilterWindowViewModel> m_filterWindowViewModel;
+    std::unique_ptr<VideoWindowViewModel> m_videoWindowViewModel;
+    std::unique_ptr<VideoDeviceManager> m_videoDeviceManager;
 };
 
 #endif // APPLICATIONCONTROLLER_H

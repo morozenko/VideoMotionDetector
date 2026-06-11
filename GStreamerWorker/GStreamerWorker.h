@@ -20,19 +20,20 @@
 #include <gst/gst.h>
 #include <stdint.h>
 
+#include "BaseGStreamerWorker.h"
+
 class QObject;
 
-class GStreamerWorker
+class GStreamerWorker : public BaseGStreamerWorker
 {
 public:
     static GStreamerWorker& getInstance();
-    void CreateGstPipeline();
+    void createGstPipeline() override;
     GstElement* getSink() const;
     void setVideoSink(QObject* sink);
     uint16_t getDelayValue();
     void setDelayValue(uint16_t msecDelay);
 
-    void startPlaying() const;
     void updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
     ~GStreamerWorker();
@@ -42,7 +43,7 @@ private:
     GStreamerWorker(const GStreamerWorker&) = delete;
     GStreamerWorker& operator=(const GStreamerWorker& instance) = delete;
 
-    void createPipelineElements();
+    void createPipelineElements() override;
     void setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
 private:

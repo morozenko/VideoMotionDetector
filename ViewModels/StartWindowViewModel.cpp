@@ -18,11 +18,11 @@
 
 #include "StartWindowViewModel.h"
 
-StartWindowViewModel::StartWindowViewModel(const VideoDeviceManager& videoDeviceManager)
+StartWindowViewModel::StartWindowViewModel(const VideoDeviceManager* videoDeviceManager)
     : m_usbVideoEnabled(false),
       m_screensAmount(0)
 {
-    if (nullptr != videoDeviceManager.getExternalVideoAdapter())
+    if (nullptr != videoDeviceManager->getExternalVideoAdapter())
     {
         m_usbVideoEnabled = true;
     }
@@ -46,4 +46,9 @@ uint8_t StartWindowViewModel::screensAmount()
 void StartWindowViewModel::onFilterButtonClicked()
 {
     emit goToFilterWindow();
+}
+
+void StartWindowViewModel::onDualViewButtonClicked()
+{
+    emit goToDualView();
 }

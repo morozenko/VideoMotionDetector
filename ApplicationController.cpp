@@ -30,6 +30,7 @@
 #include "ApplicationController.h"
 #include "ViewModels/StartWindowViewModel.h"
 #include "ViewModels/FilterWindowViewModel.h"
+#include "ViewModels/VideoWindowViewModel.h"
 #include "VideoManager/VideoDeviceManager.h"
 
 void setNonCapturable(QQuickWindow *window)
@@ -53,7 +54,8 @@ void setNonCapturable(QQuickWindow *window)
 ApplicationController::ApplicationController(QObject* parent)
     : m_applicationEngine(nullptr),
       m_currentWindow(nullptr),
-      m_filterWindowViewModel(nullptr)
+      m_filterWindowViewModel(nullptr),
+      m_videoDeviceManager(std::make_unique<VideoDeviceManager>())
 {
 }
 
@@ -73,15 +75,15 @@ void ApplicationController::setEngine(QQmlApplicationEngine* engine)
 
 void ApplicationController::openStartView()
 {
-    VideoDeviceManager videoDeviceManager;
-    if (nullptr == videoDeviceManager.getExternalVideoAdapter())
+    if (nullptr == m_videoDeviceManager->getExternalVideoAdapter())
     {
         qDebug() << "External adapter not found!";
     }
 
-    m_startWindowViewModel = std::make_unique<StartWindowViewModel>(videoDeviceManager);
+    m_startWindowViewModel = std::make_unique<StartWindowViewModel>(m_videoDeviceManager.get());
 
     connect(m_startWindowViewModel.get(), &StartWindowViewModel::goToFilterWindow, this, &ApplicationController::openFilterWindow);
+    connect(m_startWindowViewModel.get(), &StartWindowViewModel::goToDualView, this, &ApplicationController::openDoubleView);
 
     // connection to capture pointer to created window
     connect(m_applicationEngine, &QQmlApplicationEngine::objectCreated, this, [this](QObject *obj, const QUrl &objUrl) {
@@ -126,9 +128,9 @@ void ApplicationController::openFilterWindow()
 {
     closeStartView();
 
-    // gst_init() is called in GStreamerWorker constructor
+    // gst_init() is called in BaseGStreamerWorker constructor
     GStreamerWorker& gstWorker = GStreamerWorker::getInstance();
-    gstWorker.CreateGstPipeline();
+    gstWorker.createGstPipeline();
 
     m_filterWindowViewModel = std::make_unique<FilterWindowViewModel>(gstWorker);
     m_applicationEngine->rootContext()->setContextProperty("appViewModel", m_filterWindowViewModel.get());
@@ -174,4 +176,15 @@ void ApplicationController::updateGstreamerContext(QQuickWindow* filterWindow, Q
             GStreamerWorker::getInstance().startPlaying();
         }
     }, Qt::SingleShotConnection);
+}
+
+void ApplicationController::openDoubleView()
+{
+    closeStartView();
+
+    // m_videoDeviceManager should be initialized in startView
+    m_videoWindowViewModel = std::make_unique<VideoWindowViewModel>(m_videoDeviceManager.get());
+
+    m_applicationEngine->rootContext()->setContextProperty("originalViewModel", m_filterWindowViewModel.get());
+    m_applicationEngine->loadFromModule("VideoMotionDetector", "VideoScreenWindow");
 }
