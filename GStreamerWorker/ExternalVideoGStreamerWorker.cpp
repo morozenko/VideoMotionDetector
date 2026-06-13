@@ -1,15 +1,15 @@
 /**
- * @file    GStreamerWorker.cpp
+ * @file    ExternalVideoGStreamerWorker.cpp
  * @author  Andrii Moroz (andriimoroz88@gmail.com)
  * @brief   GStreamerWorker do all work with gstreamer - initialization, configuring,
  *          builds pipeline, starts, stop, etc.
- *          Screen is captured then two flows are blended.
+ *          Video is captured from external video adapter. Then two flows are blended.
  *          First flow is usual with 0.5 alpha transparency
  *          Second flow is color inverted, has 0.5 alpha transparency
  *          and delayed.
  *
  * @version 1.0
- * @date    2026-05-05
+ * @date    2026-06-13
  *
  * @copyright Andrii Moroz (c) 2026
  * All rights reserved
@@ -20,12 +20,13 @@
  */
 
 #include <QDebug>
+#include <QCameraDevice>
 
-#include "GStreamerWorker.h"
+#include "ExternalVideoGStreamerWorker.h"
 
 const uint32_t ONE_MILLION = 1000000;
 
-const gchar *shader_source =
+const gchar *shader =
     "varying vec2 v_texcoord;"
     "uniform sampler2D tex;"
     "void main() {"
@@ -33,26 +34,26 @@ const gchar *shader_source =
     "  gl_FragColor = vec4(1.0 - rgba.rgb, rgba.a);"
     "}";
 
-GStreamerWorker::GStreamerWorker()
+ExternalVideoGStreamerWorker::ExternalVideoGStreamerWorker()
 {
 }
 
-GStreamerWorker::~GStreamerWorker()
+ExternalVideoGStreamerWorker::~ExternalVideoGStreamerWorker()
 {
 }
 
-GStreamerWorker& GStreamerWorker::getInstance()
+ExternalVideoGStreamerWorker& ExternalVideoGStreamerWorker::getInstance()
 {
-    static GStreamerWorker instance;
+    static ExternalVideoGStreamerWorker instance;
     return instance;
 }
 
-GstElement* GStreamerWorker::getSink() const
+GstElement* ExternalVideoGStreamerWorker::getSink() const
 {
     return m_sink;
 }
 
-void GStreamerWorker::setVideoSink(QObject* sink)
+void ExternalVideoGStreamerWorker::setVideoSink(QObject* sink)
 {
     if (m_sink && sink)
     {
@@ -69,19 +70,58 @@ void GStreamerWorker::setVideoSink(QObject* sink)
     }
 }
 
-void GStreamerWorker::createPipelineElements()
+uint16_t ExternalVideoGStreamerWorker::getDelayValue()
+{
+    return m_msecDelay;
+}
+
+void ExternalVideoGStreamerWorker::setDelayValue(uint16_t msecDelay)
+{
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PAUSED))
+    {
+        qDebug() << "ERROR: Could not pause pipeline!";
+    }
+
+    GstPad *sink1 = gst_element_get_static_pad(m_mixer, "sink_1");
+
+    if (sink1)
+    {
+        qDebug() << "Setting mixer delay";
+        gst_pad_set_offset(sink1, (gint64)msecDelay*ONE_MILLION);
+        gst_object_unref(sink1);
+
+        m_msecDelay = msecDelay;
+    }
+    else
+    {
+        qDebug() << "Pad not found! Try request_pad approach.";
+    }
+
+    // flush old frames
+    gst_element_send_event(m_pipeline, gst_event_new_flush_start());
+    gst_element_send_event(m_pipeline, gst_event_new_flush_stop(TRUE));
+
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PLAYING))
+    {
+        qDebug() << "ERROR: Could not start pipeline!";
+    }
+}
+
+void ExternalVideoGStreamerWorker::createPipelineElements()
 {
     m_pipeline = gst_pipeline_new("screen-capture-pipeline");
-    m_source = gst_element_factory_make("d3d11screencapturesrc", "source"); //d3d11screencapturesrc
+
+    m_source = gst_element_factory_make("ksvideosrc", "source");
     m_capsfilter = gst_element_factory_make("capsfilter", "filter");
-    m_download = gst_element_factory_make("d3d11download", "download");
+    m_decode = gst_element_factory_make("decodebin", "decoder");
+    m_videoconvert = gst_element_factory_make("videoconvert", "converter");
     m_tee = gst_element_factory_make("tee", "tee");
     m_origQueue = gst_element_factory_make("queue", "origQueue");
     m_delay = gst_element_factory_make("queue", "delay");
 
     m_uploadShader = gst_element_factory_make("glupload", "glup_shader");
     m_shader = gst_element_factory_make("glshader", "invert");
-    g_object_set(G_OBJECT(m_shader), "fragment", shader_source, nullptr);
+    g_object_set(G_OBJECT(m_shader), "fragment", shader, nullptr);
     m_downloadShader = gst_element_factory_make("gldownload", "gldown_shader");
 
     m_mixer = gst_element_factory_make("compositor", "mixer");
@@ -90,7 +130,7 @@ void GStreamerWorker::createPipelineElements()
     m_sink = gst_element_factory_make("qml6glsink", "mysink");
 
     if ((nullptr == m_pipeline) || (nullptr == m_source) || (nullptr == m_capsfilter) ||
-        (nullptr == m_download) || (nullptr == m_tee) || (nullptr == m_origQueue) ||
+        (nullptr == m_decode) || (nullptr == m_videoconvert) || (nullptr == m_tee) || (nullptr == m_origQueue) ||
         (nullptr == m_delay) || (nullptr == m_downloadShader) || (nullptr == m_shader) ||
         (nullptr == m_uploadShader) || (nullptr == m_mixer) || (nullptr == m_convert) ||
         (nullptr == m_upload) || (nullptr == m_sink))
@@ -99,11 +139,17 @@ void GStreamerWorker::createPipelineElements()
     }
 }
 
-void GStreamerWorker::createGstPipeline(const QCameraDevice* cameraDevice)
+void ExternalVideoGStreamerWorker::createGstPipeline(const QCameraDevice* cameraDevice)
 {
+    g_assert(nullptr != cameraDevice);
+
     createPipelineElements();
 
-    GstCaps* caps = gst_caps_from_string("video/x-raw(memory:D3D11Memory), video/x-raw"); //
+    QString devicePath = cameraDevice->id();
+    qDebug() << "USB video device: " << devicePath;
+    g_object_set(G_OBJECT(m_source), "device-path", devicePath.toUtf8().constData(), nullptr);
+
+    GstCaps* caps = gst_caps_from_string("video/x-raw; image/jpeg");
     g_object_set(G_OBJECT(m_capsfilter), "caps", caps, nullptr);
     gst_caps_unref(caps);
 
@@ -118,8 +164,9 @@ void GStreamerWorker::createGstPipeline(const QCameraDevice* cameraDevice)
 
     gst_bin_add_many(GST_BIN(m_pipeline),
                      m_source,
-                     m_download,
                      m_capsfilter,
+                     m_decode,
+                     m_videoconvert,
                      m_tee,
                      m_origQueue,
                      m_delay,
@@ -132,16 +179,8 @@ void GStreamerWorker::createGstPipeline(const QCameraDevice* cameraDevice)
                      m_sink,
                      nullptr);
 
-    // // working pipe
-    // // d3d11screencapturesrc -> d3d11download -> videoconvert -> glupload -> qml6glsink
-    // if (!gst_element_link_many(m_source, m_download, m_convert2, m_upload, m_sink, nullptr))
-    // {
-    //     qDebug() << "ERROR: couldn't link whole elements!";
-    //     return;
-    // }
-
     // link screen capture flow
-    if (!gst_element_link_many(m_source, m_capsfilter, m_download, m_convert, m_tee, nullptr))
+    if (!gst_element_link_many(m_source, m_capsfilter, /*m_decode,*/ m_videoconvert, m_tee, nullptr))
     {
         qDebug() << "ERROR: couldn't link capture flow pipeline elements!";
         return;
@@ -194,7 +233,7 @@ void GStreamerWorker::createGstPipeline(const QCameraDevice* cameraDevice)
     }
 }
 
-void GStreamerWorker::setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+void ExternalVideoGStreamerWorker::setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
     GstCaps *caps = gst_caps_new_simple("video/x-raw",
                                         "width", G_TYPE_INT, width,
@@ -207,30 +246,28 @@ void GStreamerWorker::setPipelineProperties(uint16_t x, uint16_t y, uint16_t wid
     gst_caps_unref(caps);
 }
 
-void GStreamerWorker::updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+void ExternalVideoGStreamerWorker::updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
     if (!gst_element_set_state(m_pipeline, GST_STATE_PAUSED))
     {
         qDebug() << "ERROR: Could not pause pipeline!";
         handleGstError(m_pipeline);
+        return;
     }
 
     // qDebug() << "x: " << x << " y: " << y << " width: " << width << " height: " << height;
 
-    g_object_set(G_OBJECT(m_source),
-                 "crop-x", x,
-                 "crop-y", y,
-                 "crop-width", width,
-                 "crop-height", height,
-                 nullptr);
+    // g_object_set(G_OBJECT(m_source),
+    //              "crop-x", x,
+    //              "crop-y", y,
+    //              "crop-width", width,
+    //              "crop-height", height,
+    //              nullptr);
 
     GstCaps* newCaps = gst_caps_new_simple("video/x-raw",
-                                        "width", G_TYPE_INT, width,
-                                        "height", G_TYPE_INT, height,
-                                        nullptr);
-
-    GstCapsFeatures* features = gst_caps_features_new("memory:D3D11Memory", nullptr);
-    gst_caps_set_features(newCaps, 0, features);
+                                           "width", G_TYPE_INT, width,
+                                           "height", G_TYPE_INT, height,
+                                           nullptr);
 
     // Set new caps after resize
     g_object_set(G_OBJECT(m_capsfilter), "caps", newCaps, nullptr);

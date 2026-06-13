@@ -1,12 +1,8 @@
 /**
- * @file    GStreamerWorker.cpp
+ * @file    BaseGStreamerWorker.cpp
  * @author  Andrii Moroz (andriimoroz88@gmail.com)
- * @brief   GStreamerWorker do all work with gstreamer - initialization, configuring,
- *          builds pipeline, starts, stop, etc.
- *          Screen is captured then two flows are blended.
- *          First flow is usual with 0.5 alpha transparency
- *          Second flow is color inverted, has 0.5 alpha transparency
- *          and delayed.
+ * @brief   BaseGStreamerWorker base class to cover common operation
+ *          with gstreamer functionality
  *
  * @version 1.0
  * @date    2026-05-05
@@ -23,9 +19,12 @@
 
 #include "BaseGStreamerWorker.h"
 
+const uint32_t ONE_MILLION = 1000000;
+
 BaseGStreamerWorker::BaseGStreamerWorker()
 {
     gst_init(nullptr, nullptr);
+    m_msecDelay = 50;
 }
 
 BaseGStreamerWorker::~BaseGStreamerWorker()
@@ -84,4 +83,41 @@ void BaseGStreamerWorker::handleGstError(GstElement* pipeline)
     }
 
     gst_object_unref(bus);
+}
+
+uint16_t BaseGStreamerWorker::getDelayValue()
+{
+    return m_msecDelay;
+}
+
+void BaseGStreamerWorker::setDelayValue(uint16_t msecDelay)
+{
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PAUSED))
+    {
+        qDebug() << "ERROR: Could not pause pipeline!";
+    }
+
+    GstPad *sink1 = gst_element_get_static_pad(m_mixer, "sink_1");
+
+    if (sink1)
+    {
+        qDebug() << "Setting mixer delay";
+        gst_pad_set_offset(sink1, (gint64)msecDelay*ONE_MILLION);
+        gst_object_unref(sink1);
+
+        m_msecDelay = msecDelay;
+    }
+    else
+    {
+        qDebug() << "Pad not found! Try request_pad approach.";
+    }
+
+    // flush old frames
+    gst_element_send_event(m_pipeline, gst_event_new_flush_start());
+    gst_element_send_event(m_pipeline, gst_event_new_flush_stop(TRUE));
+
+    if (!gst_element_set_state(m_pipeline, GST_STATE_PLAYING))
+    {
+        qDebug() << "ERROR: Could not start pipeline!";
+    }
 }

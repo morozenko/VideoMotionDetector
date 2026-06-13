@@ -19,8 +19,13 @@ find_package(Qt6 REQUIRED COMPONENTS Multimedia)
 
 qt_standard_project_setup(REQUIRES 6.10)
 
+if(WIN32)
+    list(APPEND APP_SOURCES resources.rc)
+endif()
+
 qt_add_executable(appVideoMotionDetector
     main.cpp
+    ${APP_SOURCES}
 )
 
 qt_add_qml_module(appVideoMotionDetector
@@ -46,6 +51,8 @@ qt_add_qml_module(appVideoMotionDetector
         SOURCES GStreamerWorker/BaseGStreamerWorker.cpp
         SOURCES ViewModels/VideoWindowViewModel.h
         SOURCES ViewModels/VideoWindowViewModel.cpp
+        SOURCES GStreamerWorker/ExternalVideoGstreamerWorker.h
+        SOURCES GStreamerWorker/ExternalVideoGStreamerWorker.cpp
 )
 
 target_precompile_headers(appVideoMotionDetector PRIVATE

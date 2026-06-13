@@ -19,7 +19,7 @@
 
 #include <QObject>
 
-#include "GStreamerWorker/GStreamerWorker.h"
+#include "GStreamerWorker/BaseGStreamerWorker.h"
 
 class FilterWindowViewModel : public QObject
 {
@@ -32,7 +32,7 @@ class FilterWindowViewModel : public QObject
     Q_PROPERTY(uint16_t sliderValue READ getSliderValue WRITE setSliderValue NOTIFY sliderValueChanged)
 
 public:
-    FilterWindowViewModel(GStreamerWorker& worker);
+    FilterWindowViewModel(BaseGStreamerWorker* worker);
     ~FilterWindowViewModel() = default;
 
     uint16_t getX0() const;
@@ -64,7 +64,7 @@ private:
     uint16_t m_frameHeight;
     uint16_t m_sliderValue; // miliseconds
 
-    GStreamerWorker& m_worker;
+    BaseGStreamerWorker* m_worker;
 };
 
 #endif // FILTERWINDOWVIEWMODEL_H

@@ -16,12 +16,12 @@
 
 #include "FilterWindowViewModel.h"
 
-FilterWindowViewModel::FilterWindowViewModel(GStreamerWorker& worker)
+FilterWindowViewModel::FilterWindowViewModel(BaseGStreamerWorker* worker)
     : m_X0(200),
       m_Y0(200),
       m_frameWidth(740),
       m_frameHeight(480),
-      m_sliderValue(worker.getDelayValue()), // 50 msec
+      m_sliderValue(worker->getDelayValue()), // 50 msec
       m_worker(worker)
 {
     connect(this, &FilterWindowViewModel::X0Changed,
@@ -100,12 +100,12 @@ void FilterWindowViewModel::setSliderValue(uint16_t sliderValue)
     if (sliderValue != m_sliderValue)
     {
         m_sliderValue = sliderValue;
-        m_worker.setDelayValue(sliderValue);
+        m_worker->setDelayValue(sliderValue);
         emit sliderValueChanged();
     }
 }
 
 void FilterWindowViewModel::onSizePositionChanged()
 {
-    m_worker.updateVideoFrameSize(m_X0, m_Y0, m_frameWidth, m_frameHeight);
+    m_worker->updateVideoFrameSize(m_X0, m_Y0, m_frameWidth, m_frameHeight);
 }

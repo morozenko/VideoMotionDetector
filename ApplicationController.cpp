@@ -32,6 +32,8 @@
 #include "ViewModels/FilterWindowViewModel.h"
 #include "ViewModels/VideoWindowViewModel.h"
 #include "VideoManager/VideoDeviceManager.h"
+#include "GStreamerWorker/GStreamerWorker.h"
+#include "GStreamerWorker/ExternalVideoGstreamerWorker.h"
 
 void setNonCapturable(QQuickWindow *window)
 {
@@ -132,7 +134,7 @@ void ApplicationController::openFilterWindow()
     GStreamerWorker& gstWorker = GStreamerWorker::getInstance();
     gstWorker.createGstPipeline();
 
-    m_filterWindowViewModel = std::make_unique<FilterWindowViewModel>(gstWorker);
+    m_filterWindowViewModel = std::make_unique<FilterWindowViewModel>(&gstWorker);
     m_applicationEngine->rootContext()->setContextProperty("appViewModel", m_filterWindowViewModel.get());
 
     // connection to capture pointer to created window
@@ -187,4 +189,53 @@ void ApplicationController::openDoubleView()
 
     m_applicationEngine->rootContext()->setContextProperty("originalViewModel", m_filterWindowViewModel.get());
     m_applicationEngine->loadFromModule("VideoMotionDetector", "VideoScreenWindow");
+
+    // gst_init() is called in BaseGStreamerWorker constructor
+    ExternalVideoGStreamerWorker& gstWorker = ExternalVideoGStreamerWorker::getInstance();
+    gstWorker.createGstPipeline(m_videoDeviceManager->getExternalVideoAdapter());
+
+    m_filterWindowViewModel = std::make_unique<FilterWindowViewModel>(&gstWorker);
+    m_applicationEngine->rootContext()->setContextProperty("appViewModel", m_filterWindowViewModel.get());
+
+    // connection to capture pointer to created window
+    connect(m_applicationEngine, &QQmlApplicationEngine::objectCreated, this, [this](QObject *obj, const QUrl &objUrl) {
+        if (!obj && !objUrl.isEmpty())
+        {
+            qCritical() << "Failed to load QML object:" << objUrl;
+            return;
+        }
+
+        QQuickItem* videoItem;
+        QQuickWindow* rootObject = qobject_cast<QQuickWindow*>(obj);
+
+        videoItem = rootObject->findChild<QQuickItem*> ("videoOutputItem");
+        g_assert (videoItem);
+
+        // set window not capturable
+        setNonCapturable(rootObject);
+        updateExternalGstreamerContext(rootObject, videoItem);
+
+    }, Qt::SingleShotConnection);
+
+    m_applicationEngine->loadFromModule("VideoMotionDetector", "FilterScreenWindow");
+}
+
+void ApplicationController::updateExternalGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem)
+{
+    // Update gstreamer context, after QML is initialized
+    GstElement* sink = ExternalVideoGStreamerWorker::getInstance().getSink();
+    auto connection = QObject::connect(filterWindow, &QQuickWindow::beforeRendering, filterWindow, [sink, videoItem, filterWindow]() {
+        // update captured frame size
+        ExternalVideoGStreamerWorker::getInstance().updateVideoFrameSize(filterWindow->x(),
+                                                            filterWindow->y(),
+                                                            filterWindow->width(),
+                                                            filterWindow->height());
+
+        if (sink) {
+            // Set window directly into sink
+            // It force qml6glsink to take context, created by QT
+            g_object_set(sink, "widget", videoItem, nullptr);
+            ExternalVideoGStreamerWorker::getInstance().startPlaying();
+        }
+    }, Qt::SingleShotConnection);
 }

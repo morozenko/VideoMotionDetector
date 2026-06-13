@@ -52,6 +52,7 @@ private:
     ~ApplicationController() override = default;
     void closeStartView();
     void updateGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem);
+    void updateExternalGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem);
 
 private:
     QQmlApplicationEngine* m_applicationEngine;

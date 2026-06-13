@@ -19,23 +19,32 @@
 
 #include <gst/gst.h>
 
+class QCameraDevice;
+
 class BaseGStreamerWorker
 {
 public:
     void startPlaying();
+    uint16_t getDelayValue();
+    void setDelayValue(uint16_t msecDelay);
+
+    virtual void updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height) = 0;
 
     virtual ~BaseGStreamerWorker();
 
 protected:
     BaseGStreamerWorker();
 
-    virtual void createGstPipeline() = 0;
-    virtual void createPipelineElements() = 0;
+    virtual void createGstPipeline(const QCameraDevice* cameraDevice = nullptr) = 0;
 
     void handleGstError(GstElement* pipeline);
 
 protected:
     GstElement* m_pipeline;
+    GstElement* m_sink;
+    GstElement* m_mixer;        // video compositor
+
+    uint16_t m_msecDelay;
 };
 
 #endif // BASEGSTREAMERWORKER_H

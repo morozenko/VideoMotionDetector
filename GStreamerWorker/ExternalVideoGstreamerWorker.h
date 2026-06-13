@@ -1,10 +1,11 @@
 /**
- * @file    GStreamerWorker.h
+ * @file    ExternalVideoGStreamerWorker.h
  * @author  Andrii Moroz (andriimoroz88@gmail.com)
  * @brief   GStreamerWorker do all work with gstreamer - initialization, configuring,
  *          builds pipeline, starts, stop, etc
+ *          Video is captured from external video adapter. Then two flows are blended.
  * @version 1.0
- * @date    2026-05-05
+ * @date    2026-06-13
  *
  * @copyright Andrii Moroz (c) 2026
  * All rights reserved
@@ -14,8 +15,8 @@
  * in any medium, is strictly prohibited without author permission.
  */
 
-#ifndef GSTREAMERWORKER_H
-#define GSTREAMERWORKER_H
+#ifndef EXTERNALVIDEOGSTREAMERWORKER_H
+#define EXTERNALVIDEOGSTREAMERWORKER_H
 
 #include <gst/gst.h>
 #include <stdint.h>
@@ -24,22 +25,24 @@
 
 class QObject;
 
-class GStreamerWorker : public BaseGStreamerWorker
+class ExternalVideoGStreamerWorker : public BaseGStreamerWorker
 {
 public:
-    static GStreamerWorker& getInstance();
+    static ExternalVideoGStreamerWorker& getInstance();
     void createGstPipeline(const QCameraDevice* cameraDevice = nullptr) override;
     GstElement* getSink() const;
     void setVideoSink(QObject* sink);
+    uint16_t getDelayValue();
+    void setDelayValue(uint16_t msecDelay);
 
     void updateVideoFrameSize(uint16_t x, uint16_t y, uint16_t width, uint16_t height) override;
 
-    ~GStreamerWorker();
+    ~ExternalVideoGStreamerWorker();
 
 private:
-    GStreamerWorker();
-    GStreamerWorker(const GStreamerWorker&) = delete;
-    GStreamerWorker& operator=(const GStreamerWorker& instance) = delete;
+    ExternalVideoGStreamerWorker();
+    ExternalVideoGStreamerWorker(const ExternalVideoGStreamerWorker&) = delete;
+    ExternalVideoGStreamerWorker& operator=(const ExternalVideoGStreamerWorker& instance) = delete;
 
     void createPipelineElements();
     void setPipelineProperties(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
@@ -47,7 +50,8 @@ private:
 private:
     GstElement* m_source;
     GstElement* m_capsfilter;
-    GstElement* m_download;
+    GstElement* m_decode;
+    GstElement* m_videoconvert;
     GstElement* m_tee;          // video splitter
     GstElement* m_origQueue;
     GstElement* m_delay;
@@ -58,4 +62,4 @@ private:
     GstElement* m_upload;
 };
 
-#endif // GSTREAMERWORKER_H
+#endif // EXTERNALVIDEOGSTREAMERWORKER_H
