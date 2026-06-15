@@ -36,7 +36,7 @@ Window {
     onYChanged: resizeTimer.restart()
 
     visible: true
-    flags: Qt.FramelessWindowHint
+    flags: Qt.Window | Qt.FramelessWindowHint
 
     // Edge thickness for mouse detection
     property int resizeMargin: 8

@@ -99,4 +99,21 @@ Window {
             }
         }
     }
+
+    // Copyright text
+    Text {
+        text: "© Blukach"
+
+        // Small and subtle styling
+        font.pixelSize: 10
+        color: "gray"
+
+        // Position at the bottom with a small margin
+        anchors {
+            bottom: parent.bottom
+            right: parent.right
+            bottomMargin: 10
+            rightMargin: 10
+        }
+    }
 }
