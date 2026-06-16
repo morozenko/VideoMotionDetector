@@ -51,6 +51,7 @@ private:
     explicit ApplicationController(QObject* parent = nullptr);
     ~ApplicationController() override = default;
     void closeStartView();
+    void loadFilterView();
     void updateGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem);
     void updateExternalGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem);
 

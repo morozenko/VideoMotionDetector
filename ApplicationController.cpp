@@ -25,6 +25,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QTimer>
 #include <windows.h>
 
 #include "ApplicationController.h"
@@ -34,6 +35,8 @@
 #include "VideoManager/VideoDeviceManager.h"
 #include "GStreamerWorker/GStreamerWorker.h"
 #include "GStreamerWorker/ExternalVideoGstreamerWorker.h"
+
+const uint32_t HUNDRED_MSEC = 100;
 
 void setNonCapturable(QQuickWindow *window)
 {
@@ -126,6 +129,28 @@ void ApplicationController::closeStartView()
     m_applicationEngine->trimComponentCache();
 }
 
+void ApplicationController::loadFilterView()
+{
+    // show busy indicator window
+    QQmlComponent busyComponent(m_applicationEngine, QUrl(QStringLiteral("qrc:/qt/qml/VideoMotionDetector/qml/BusyIndicator.qml")));
+    QObject* busyWindowObject = busyComponent.create();
+
+    if (busyWindowObject)
+    {
+        QMetaObject::invokeMethod(busyWindowObject, "show");
+    }
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, HUNDRED_MSEC);
+    m_applicationEngine->loadFromModule("VideoMotionDetector", "FilterScreenWindow");
+
+    // stop busy indicator
+    if (busyWindowObject)
+    {
+        QMetaObject::invokeMethod(busyWindowObject, "close");
+        busyWindowObject->deleteLater();
+    }
+}
+
 void ApplicationController::openFilterWindow()
 {
     closeStartView();
@@ -157,7 +182,7 @@ void ApplicationController::openFilterWindow()
 
     }, Qt::SingleShotConnection);
 
-    m_applicationEngine->loadFromModule("VideoMotionDetector", "FilterScreenWindow");
+    loadFilterView();
 }
 
 void ApplicationController::updateGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem)
@@ -217,7 +242,7 @@ void ApplicationController::openDoubleView()
 
     }, Qt::SingleShotConnection);
 
-    m_applicationEngine->loadFromModule("VideoMotionDetector", "FilterScreenWindow");
+    loadFilterView();
 }
 
 void ApplicationController::updateExternalGstreamerContext(QQuickWindow* filterWindow, QQuickItem* videoItem)

@@ -34,6 +34,7 @@ qt_add_qml_module(appVideoMotionDetector
             Main.qml
             qml/FilterScreenWindow.qml
             qml/VideoScreenWindow.qml
+            qml/BusyIndicator.qml
 
         SOURCES GStreamerWorker/GStreamerWorker.cpp
         SOURCES GStreamerWorker/GStreamerWorker.h
